@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Desk Avatar — Tamagotchi</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background-color: #000d06; color: #00ff88;
+    font-family: 'Courier New', Courier, monospace;
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(0,255,136,0.06) 0%, transparent 60%),
+      linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    cursor: pointer;
+    transition: background-color 1.5s ease;
+    position: relative;
+  }
+  body.sleeping { background-color: #000a04; }
+  body.ai-mode { background-color: #001a10; }
+  body.ai-mode .crt-overlay { opacity: 0.7; }
+
+  #app { position: fixed; inset: 0; transition: filter 1.2s ease; }
+  body.sleeping #app { filter: brightness(0.68); }
+
+  .crt-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background:
+      linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.22) 50%),
+      linear-gradient(90deg, rgba(255,0,0,0.05), rgba(0,255,0,0.02), rgba(0,0,255,0.05));
+    background-size: 100% 4px, 6px 100%;
+    pointer-events: none; z-index: 9999;
+    animation: flicker 0.15s infinite;
+    transition: opacity 1.2s ease;
+  }
+  body.sleeping .crt-overlay { opacity: 0.35; }
+  @keyframes flicker { 0%{opacity:.95} 50%{opacity:.85} 100%{opacity:.95} }
+
+  .avatar-container {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    border: none; border-radius: 0; overflow: hidden;
+    background: radial-gradient(circle at 50% 46%, rgba(0,255,157,0.10), rgba(0,0,0,0.14) 60%), rgba(0,0,0,0.20);
+    box-shadow: inset 0 0 80px rgba(0,255,157,0.05);
+    transition: box-shadow 0.8s ease;
+    pointer-events: none;
+  }
+  .avatar-container.speaking { box-shadow: inset 0 0 120px rgba(0,255,157,0.16); }
+  .avatar-container.sleeping { box-shadow: inset 0 0 60px rgba(0,255,157,0.02); }
+  .avatar-container.greeting { box-shadow: inset 0 0 140px rgba(0,255,157,0.22); }
+
+  canvas { display: block; width: 100%; height: 100%; border-radius: 0; cursor: pointer; touch-action: manipulation; }
+
+  .subtitle {
+    position: fixed; left: 50%; bottom: 11vh; transform: translateX(-50%);
+    z-index: 11; max-width: 86vw; padding: 10px 22px;
+    font-size: clamp(16px, 3.2vw, 30px); letter-spacing: 1px; line-height: 1.35; text-align: center;
+    color: #eafff5; background: rgba(0,15,9,0.72);
+    border: 1px solid rgba(0,255,157,0.35); border-radius: 12px;
+    text-shadow: 0 0 12px rgba(0,255,136,0.8);
+    box-shadow: 0 0 24px rgba(0,255,157,0.18);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+  }
+  .subtitle.show { opacity: 1; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 5vh; transform: translateX(-50%) translateY(10px);
+    z-index: 15; font-size: clamp(11px, 1.5vw, 14px);
+    color: #00ffaa; text-transform: uppercase; letter-spacing: 2px;
+    background: rgba(0,20,11,0.85); border: 1px solid rgba(0,255,157,0.45);
+    border-radius: 8px; padding: 8px 20px;
+    text-shadow: 0 0 8px rgba(0,255,136,0.6);
+    box-shadow: 0 0 22px rgba(0,255,157,0.18);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s ease;
+    max-width: 88vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.warn { color: #ffaa44; border-color: rgba(255,170,68,0.6); text-shadow: 0 0 8px rgba(255,170,68,0.6); }
+
+  #hotkey-menu {
+    position: fixed; top: 20px; left: 20px; z-index: 30;
+    background: rgba(0,15,9,0.94); border: 1px solid rgba(0,255,157,0.5); border-radius: 10px;
+    padding: 14px 18px; font-size: 12px; letter-spacing: 1px; line-height: 1.7;
+    box-shadow: 0 0 30px rgba(0,255,157,0.25); max-width: 320px; display: none; flex-direction: column; gap: 4px;
+  }
+  #hotkey-menu.show { display: flex; }
+  #hotkey-menu h3 {
+    font-size: 11px; letter-spacing: 3px; color: #00ffaa; margin: 10px 0 4px 0;
+    text-transform: uppercase; border-bottom: 1px solid rgba(0,255,157,0.25); padding-bottom: 4px;
+  }
+  #hotkey-menu h3:first-child { margin-top: 0; }
+  .menu-btn {
+    display: flex; justify-content: space-between; align-items: center;
+    background: transparent; border: 1px solid transparent; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 12px; letter-spacing: 1px; transition: all 0.15s;
+  }
+  .menu-btn:hover { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); }
+  .menu-btn .key {
+    display: inline-block; min-width: 50px; padding: 2px 6px; border: 1px solid rgba(0,255,157,0.4); border-radius: 4px;
+    text-align: center; font-weight: bold; color: #00ff88; background: rgba(0,255,136,0.06);
+  }
+  .menu-btn .label { color: rgba(0,255,157,0.65); }
+  .menu-btn.active .key { background: rgba(0,255,136,0.35); border-color: #00ff88; color: #ffffff; box-shadow: 0 0 8px rgba(0,255,136,0.6); }
+  .menu-btn.active .label { color: #00ffaa; }
+  .menu-sep { border-top: 1px solid rgba(0,255,157,0.2); margin: 6px 0; }
+  .menu-footer { font-size: 10px; opacity: 0.55; text-align: center; letter-spacing: 1.5px; margin-top: 6px; }
+  .menu-link { display: block; font-size: 11px; color: #00ffaa; text-decoration: none; padding: 4px 8px; border-radius: 6px; word-break: break-all; transition: background 0.15s; }
+  .menu-link:hover { background: rgba(0,255,136,0.1); }
+  .menu-version { font-size: 11px; color: rgba(0,255,157,0.75); padding: 4px 8px; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="avatar-container" id="avatarContainer">
+    <canvas id="avatarCanvas" aria-label="Interactive neon avatar"></canvas>
+  </div>
+</div>
+<div class="crt-overlay"></div>
+
+<div class="subtitle" id="subtitle"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Menu Unificato (ESC) -->
+<div id="hotkey-menu">
+  <h3>AI PROVIDER</h3>
+  <button class="menu-btn" id="hk-provider"><span class="key">G</span><span class="label" id="provider-label">Switch to Groq</span></button>
+
+  <h3>MICROPHONE</h3>
+  <button class="menu-btn" id="hk-mic-debug"><span class="key">D</span><span class="label">debug mic</span></button>
+
+  <h3>INFO</h3>
+  <div class="menu-version">CB-01 · v1.2.0</div>
+  <a class="menu-link" href="https://github.com/cruelben/avatar_ai_cb-01" target="_blank" rel="noopener">github.com/cruelben/avatar_ai_cb-01</a>
+
+  <div class="menu-footer">Esc to close</div>
+</div>
+
+<input type="file" id="context-file-input" accept=".js,.txt,.mjs" hidden>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const ZOOM = 1.4;
+const AVATAR_VERSION = 'v1.2.0';
+const PROXY_BASE_URL = 'https://cb01-proxy.cruelben.workers.dev';
+const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
+const GEMINI_SYSTEM_PROMPT = "Sei CB-01, un avatar da scrivania sarcastico. Rispondi breve, massimo 2-3 frasi. Non essere gentile, sii diretto.";
+
+const MOOD_CONFIG = {
+  microsleepMinMs: 3 * 60 * 1000, microsleepMaxMs: 12 * 60 * 1000,
+  microsleepDurationMinMs: 3000, microsleepDurationMaxMs: 10000,
+  yawnMinMs: 90 * 1000, yawnMaxMs: 6 * 60 * 1000,
+  expressionMinMs: 20 * 1000, expressionMaxMs: 70 * 1000,
+  selfTalkMinMs: 45 * 60 * 1000, selfTalkMaxMs: 2 * 60 * 60 * 1000,
+  greetDurationMs: 5000
+};
+
+const AUDIO_CONFIG = {
+  chirpVolume: 0.026, greetVolume: 0.025, yawnVolume: 0.114,
+  selfTalkVolume: 0.4, lowVolume: 0.4, scheduledVolume: 0.85,
+  readVolume: 0.85, enabled: true
+};
+
+const SELF_TALK_PHRASES = ["che ore sono?","ho fame","che palle","mi annoio","ancora qui?","quasi ora di staccare","un caffè, dai","basta guardarmi","quanto manca?","che sonno"];
+const AWAKE_EXPRESSIONS = ['neutro','neutro','neutro','felice','annoiato','assonnato','sorpreso'];
+
+const SCHEDULED_EVENTS = [
+  { h: 11, m: 0, sequence: [" è l'ora del caffe, ", "non fare lo stacanovista ", "", "del cazzo"] },
+  { h: 12, m: 30, sequence: ["tra poco si esce,", "", "hai sentito Bessi?"] },
+  { h: 15, m: 0, text: "che pomeriggio di m." },
+  { h: 16, m: 0, text: " è quasi finita" },
+  { h: 16, m: 45, sequence: ["E' ora di fare un","Lento","SHAT DAAUNN!!!","E' stato bello lavorare con voi","chiudo","E","Mi levo dai coglioni","Ciao Piera","Ciao Marino","quando uscite spegnete tutto","","cazzo!"] },
+  { h: 17, m: 1, sequence: ["che fai ancora qui?","","non hai una vita?"] },
+  { h: 17, m: 15, sequence: ["guarda che il treno non ti aspetta","","non fare il coglione"] },
+];
+
+const VOICE_REPLIES = [
+  "e?", "dimmi", "come dici?", "sì sì", "mi ascolti?", "parla pure", 
+  "ti sto sentendo", "cosa c'è?", "dimmi tutto", "ti ascolto", 
+  "sono qui per questo", "che vuoi?", "ti sento, ma fai in fretta", 
+  "sto ascoltando", "parla, ti sto sentendo", "dì pure", 
+  "sono tutto orecchie", "hai bisogno di qualcosa?", "ti serve qualcosa?", 
+  "avanti, parla", "non ho tutto il giorno", "di che si tratta?", "vai avanti"
+];
+
+const MIC_PHRASES = [
+  "oh!", "che è stato?", "mi hai spaventato", "caspita!", 
+  "che succede?", "ahi!", "ma che diamine?", "tutto bene?", 
+  "che botto!", "ma sei impazzito?", "mi stavi facendo prendere un colpo", 
+  "chi va là?", "attento a quello che fai", "che è successo?", 
+  "santo cielo!", "ma che stai combinando?", "non mi piace essere disturbato", 
+  "mi hai svegliato di colpo", "guarda che ho sentito tutto", 
+  "che rumore assurdo", "stai attento"
+];
+
+const COLOR_MAIN = '#00ff88';
+const COLOR_GLOW = 'rgba(0,255,136,0.8)';
+
+// ============================================================
+// DOM
+// ============================================================
+const canvas = document.getElementById('avatarCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('avatarContainer');
+const hotkeyMenuEl = document.getElementById('hotkey-menu');
+const contextFileInput = document.getElementById('context-file-input');
+const toastEl = document.getElementById('toast');
+const subtitleEl = document.getElementById('subtitle');
+const hkMicDebug = document.getElementById('hk-mic-debug');
+const hkProvider = document.getElementById('hk-provider');
+const providerLabel = document.getElementById('provider-label');
+
+// ============================================================
+// HELPERS
+// ============================================================
+function rand(min, max) { return min + Math.random() * (max - min); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function isTypingInField() {
+  const el = document.activeElement;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
+function basename(p) {
+  if (!p) return '';
+  const s = String(p);
+  const i = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+  return i >= 0 ? s.slice(i + 1) : s;
+}
+
+let toastTimer = null;
+function toast(msg, isWarn) {
+  if (!toastEl) return;
+  toastEl.textContent = msg;
+  toastEl.classList.toggle('warn', !!isWarn);
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 2500);
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+let LW = 420, LH = 420;
+function fitAvatar() {
+  const w = window.innerWidth, h = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const S = (Math.min(w, h) / 420) * ZOOM;
+  LW = w / S; LH = h / S;
+  ctx.setTransform(dpr * S, 0, 0, dpr * S, 0, 0);
+}
+window.addEventListener('resize', fitAvatar);
+window.addEventListener('orientationchange', () => setTimeout(fitAvatar, 100));
+fitAvatar();
+
+// ============================================================
+// STATE
+// ============================================================
+let currentMood = 'awake';
+let moodStartTime = Date.now();
+let moodDurationMs = 0;
+let nextMicrosleepAt = Date.now() + rand(MOOD_CONFIG.microsleepMinMs, MOOD_CONFIG.microsleepMaxMs);
+let nextYawnAt = Date.now() + rand(MOOD_CONFIG.yawnMinMs, MOOD_CONFIG.yawnMaxMs);
+let nextExpressionAt = Date.now() + rand(MOOD_CONFIG.expressionMinMs, MOOD_CONFIG.expressionMaxMs);
+let nextSelfTalkAt = Date.now() + rand(MOOD_CONFIG.selfTalkMinMs, MOOD_CONFIG.selfTalkMaxMs);
+
+let audioUnlocked = false;
+let muted = false; 
+let aiMode = false;
+let aiWithContext = false;
+let aiProvider = 'gemini'; // 'gemini' o 'groq' (di default gemini)
+let aiTextInputOpen = false;
+let aiProcessing = false;
+let hotkeyMenuOpen = false;
+
+let isSpeaking = false;
+let mouthOpen = 0;
+let targetMouthOpen = 0;
+let time = 0;
+let clickTargetX = 0;
+let clickTargetY = 0;
+let sleepZs = [];
+let zSpawnTimer = 0;
+
+let eyeBlink = 0;
+let blinkPhase = 'idle';
+let blinkPhaseTimer = 0;
+let blinkCloseDuration = 4;
+let blinkOpenDuration = 4;
+let blinkPauseMin = 150;
+let blinkNextDelay = 0;
+let blinkWantsDouble = false;
+let blinkDoubleGapDuration = 8;
+let forcedBlinkQueue = 0;
+
+let yawnActive = 0;
+let yawnPhase = 0;
+let mouthTwitchTimer = 0;
+let mouthTwitchNextAt = rand(20, 60) * 60;
+let mouthTwitchActive = 0;
+let mouthTwitchPhase = 0;
+let mouthTwitchDir = 1;
+let browTwitchTimer = 0;
+let browTwitchNextAt = rand(15, 45) * 60;
+let browTwitchActive = 0;
+let browTwitchPhase = 0;
+let browTwitchAmount = 0;
+let headDriftTimer = 0;
+let headDriftNextAt = 90 + Math.random() * 150;
+let headDriftTarget = 0;
+let headDriftCurrent = 0;
+let pupilScale = 1;
+let pupilScaleTarget = 1;
+let pupilTimer = 0;
+let pupilNextAt = 180 + Math.random() * 240;
+let wanderActive = false;
+let wanderTimer = 0;
+let wanderNextAt = 120 + Math.random() * 180;
+let wanderTargetX = 0, wanderTargetY = 0, wanderReturnTimer = 0;
+let saccadeTimer = 0;
+let saccadeNextAt = 15 + Math.random() * 25;
+let saccadeX = 0, saccadeY = 0;
+let saccadeTargetX = 0, saccadeTargetY = 0;
+let reflectionTimer = 0;
+let reflectionNextAt = 1500 + Math.random() * 1500;
+let reflectionActive = 0;
+let reflectionPhase = 0;
+let reflectionTotalFrames = 180;
+let breathPhaseA = 0, breathPhaseB = 0, breathPhaseC = 0;
+let breathCycleTimer = 0;
+let breathCycleDuration = 180 + Math.random() * 120;
+let currentBreathOffset = 0;
+let glitchTimer = 0;
+let glitchNextAt = 600 + Math.random() * 1200;
+let glitchIntensity = 0;
+let eyeTargetX = 0, eyeTargetY = 0;
+let eyeCurrentX = 0, eyeCurrentY = 0;
+let mouseMovedTimer = 0;
+let mouseIsActive = false;
+
+let currentEmotion = { browAngle: 0, browHeight: 0, mouthCurve: 0, eyeOpen: 1, mouthWidth: 80, headTilt: 0 };
+let targetEmotion = { ...currentEmotion };
+
+let customAiContext = null;
+let importedFileName = '';
+
+let hoveredButtonId = null;
+let canvasMouseX = -1, canvasMouseY = -1;
+
+// ============================================================
+// AUDIO
+// ============================================================
+let audioCtx = null;
+function initAudioContext() {
+  if (audioCtx) return;
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+}
+function tone(freq, duration, volume, type, freqEnd) {
+  if (!audioCtx || !AUDIO_CONFIG.enabled || muted) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  if (freqEnd) osc.frequency.linearRampToValueAtTime(freqEnd, t + duration);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(volume, t + 0.03);
+  gain.gain.linearRampToValueAtTime(0, t + duration);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(t); osc.stop(t + duration + 0.05);
+}
+function playChirp() {
+  tone(720, 0.09, AUDIO_CONFIG.chirpVolume, 'sine', 620);
+  setTimeout(() => tone(560, 0.12, AUDIO_CONFIG.chirpVolume, 'sine', 480), 95);
+}
+function playGreet() {
+  tone(440, 0.07, AUDIO_CONFIG.greetVolume, 'sine');
+  setTimeout(() => tone(660, 0.07, AUDIO_CONFIG.greetVolume, 'sine'), 80);
+  setTimeout(() => tone(880, 0.13, AUDIO_CONFIG.greetVolume, 'sine', 820), 160);
+}
+function playYawn() {
+  if (!audioCtx || !AUDIO_CONFIG.enabled || muted) return;
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(180, t);
+  osc.frequency.linearRampToValueAtTime(300, t + 0.45);
+  osc.frequency.linearRampToValueAtTime(160, t + 1.0);
+  filter.type = 'lowpass'; filter.frequency.value = 480;
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(AUDIO_CONFIG.yawnVolume, t + 0.25);
+  gain.gain.linearRampToValueAtTime(0, t + 1.0);
+  osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(t); osc.stop(t + 1.05);
+}
+
+// ============================================================
+// PARTICLES & WAVES
+// ============================================================
+let particles = [];
+class Particle {
+  constructor() { this.reset(); this.y = Math.random() * LH; }
+  reset() {
+    this.x = Math.random() * LW; this.y = LH + 20;
+    this.sizeBase = Math.random() * 2.5 + 0.5; this.size = this.sizeBase;
+    this.speedBase = Math.random() * 0.4 + 0.2; this.speed = this.speedBase;
+    this.alphaBase = Math.random() * 0.4 + 0.15; this.alpha = this.alphaBase;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.wobbleSpeed = Math.random() * 0.02 + 0.008;
+  }
+  update(intensity) {
+    this.speed = this.speedBase * (1 + intensity * 2.5);
+    this.size = this.sizeBase * (1 + intensity * 1.5);
+    this.alpha = Math.min(1, this.alphaBase * (1 + intensity * 2));
+    this.wobble += this.wobbleSpeed * (1 + intensity * 2);
+    this.y -= this.speed;
+    this.x += Math.sin(this.wobble) * (0.4 + intensity * 1.5);
+    if (this.y < -20) this.reset();
+  }
+  draw() {
+    ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = COLOR_MAIN;
+    ctx.shadowBlur = 6 + 10 * (this.size / this.sizeBase - 1); ctx.shadowColor = COLOR_MAIN;
+    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
+for (let i = 0; i < 90; i++) particles.push(new Particle());
+
+let waves = [];
+let waveSpawnTimer = 0;
+function spawnWave(baseAlpha, baseSpeed) {
+  waves.push({ radius: 180, maxRadius: 260 + Math.random() * 60, alpha: baseAlpha, speed: baseSpeed + Math.random() * 0.6, width: 1.5 + Math.random() * 1 });
+}
+function updateWaves() {
+  waveSpawnTimer++;
+  const spawnInterval = isSpeaking ? 10 : (currentMood === 'sleeping' ? 130 : 55);
+  const baseAlpha = isSpeaking ? 0.65 : (currentMood === 'sleeping' ? 0.12 : 0.30);
+  const baseSpeed = isSpeaking ? 1.2 : (currentMood === 'sleeping' ? 0.35 : 0.65);
+  if (waveSpawnTimer >= spawnInterval) { waveSpawnTimer = 0; spawnWave(baseAlpha, baseSpeed); }
+  for (let i = waves.length - 1; i >= 0; i--) {
+    const w = waves[i]; w.radius += w.speed; w.alpha -= 0.010;
+    if (w.alpha <= 0 || w.radius >= w.maxRadius) waves.splice(i, 1);
+  }
+}
+function drawWaves(cx, cy) {
+  waves.forEach(w => {
+    ctx.save(); ctx.strokeStyle = COLOR_MAIN; ctx.globalAlpha = w.alpha; ctx.lineWidth = w.width;
+    ctx.shadowBlur = 15; ctx.shadowColor = COLOR_GLOW;
+    ctx.beginPath(); ctx.arc(cx, cy, w.radius, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  });
+}
+
+// ============================================================
+// SYLLABLES / WORDS / VOICES
+// ============================================================
+function getSyllables(text) {
+  const words = text.toLowerCase().match(/[a-zàèéìòù]+/g) || [];
+  const result = []; const vowels = 'aeiouàèéìòù';
+  for (const word of words) {
+    let cur = '';
+    for (let i = 0; i < word.length; i++) {
+      cur += word[i];
+      const isV = vowels.includes(word[i]);
+      const nextV = i + 1 < word.length && vowels.includes(word[i + 1]);
+      if (isV && !nextV) { result.push(cur); cur = ''; }
+    }
+    if (cur) result.push(cur);
+  }
+  return result;
+}
+function extractWords(text) {
+  const words = []; const regex = /[a-zA-ZàèéìòùÀÈÉÌÒÙ]+/g;
+  let m;
+  while ((m = regex.exec(text)) !== null) { words.push({ word: m[0].toLowerCase(), index: m.index }); }
+  return words;
+}
+
+let selectedVoice = null;
+function getBrowserSpeechLanguage() {
+  return (navigator.languages && navigator.languages[0]) || navigator.language || document.documentElement.lang || 'it-IT';
+}
+function pickVoice() {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const norm = s => (s || '').toLowerCase().replace(/_/g, '-');
+  const browserLang = norm(getBrowserSpeechLanguage());
+  const baseLang = browserLang.split('-')[0];
+
+  let italianVoices = voices.filter(v => norm(v.lang).split('-')[0] === 'it');
+  if (italianVoices.length > 0) {
+    const maleKeywords = ['male', 'uomo', 'maschile', 'cosimo', 'diego', 'luca', 'paolo', 'roberto', 'andrea'];
+    let maleVoice = italianVoices.find(v => {
+      const name = (v.name || '').toLowerCase();
+      return maleKeywords.some(k => name.includes(k));
+    });
+    if (maleVoice) return maleVoice;
+    
+    const femaleKeywords = ['female', 'donna', 'femminile', 'elsa', 'alice', 'federica', 'isabella'];
+    let nonFemaleVoice = italianVoices.find(v => {
+      const name = (v.name || '').toLowerCase();
+      return !femaleKeywords.some(k => name.includes(k));
+    });
+    if (nonFemaleVoice) return nonFemaleVoice;
+    return italianVoices[0];
+  }
+
+  let v = voices.find(v => norm(v.lang) === browserLang);
+  if (!v) v = voices.find(v => norm(v.lang).split('-')[0] === baseLang);
+  return v || voices.find(v => v.default) || voices[0];
+}
+function loadVoices() { const v = pickVoice(); if (v) selectedVoice = v; }
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+}
+
+// ============================================================
+// EMOTIONS
+// ============================================================
+const EMOTION_KEYWORDS = {
+  felice: ['ciao','benvenuto','grazie','felice','bene','ottimo','grande','bello','amore','contento','evviva','bravo','sorriso','piacere','caffe','caffè'],
+  triste: ['purtroppo','triste','male','problema','difficile','brutto','dispiace','sofferenza','dolore','solo','perdere','staccare'],
+  arrabbiato: ['attenzione','pericolo','errore','grave','rabbia','basta','no','mai','inaccettabile','sbagliato','cazzo','palle','coglioni'],
+  sorpreso: ['wow','incredibile','davvero','improvviso','inaspettato','sorpresa','caspita','accidenti','oh']
+};
+let activeEmotion = 'neutro';
+let emotionHoldFrames = 0;
+let wordsInText = [];
+let wordCursor = 0;
+
+function detectEmotionForWord(word) {
+  for (const [emotion, keywords] of Object.entries(EMOTION_KEYWORDS)) {
+    if (keywords.includes(word)) return emotion;
+  }
+  return null;
+}
+function emotionParams(emotion) {
+  switch (emotion) {
+    case 'felice':    return { browAngle: 0.3, browHeight: -5, mouthCurve: 1, eyeOpen: 0.95, mouthWidth: 90, headTilt: 0.02 };
+    case 'triste':    return { browAngle: -0.8, browHeight: 8, mouthCurve: -1, eyeOpen: 0.75, mouthWidth: 70, headTilt: -0.05 };
+    case 'arrabbiato':return { browAngle: -1.2, browHeight: 5, mouthCurve: -0.7, eyeOpen: 0.7, mouthWidth: 80, headTilt: 0 };
+    case 'sorpreso':  return { browAngle: 0.6, browHeight: -14, mouthCurve: 0, eyeOpen: 1.5, mouthWidth: 75, headTilt: 0 };
+    case 'annoiato':  return { browAngle: -0.3, browHeight: 2, mouthCurve: -0.25, eyeOpen: 0.82, mouthWidth: 76, headTilt: 0.03 };
+    case 'assonnato': return { browAngle: 0, browHeight: 5, mouthCurve: -0.1, eyeOpen: 0.55, mouthWidth: 72, headTilt: 0.06 };
+    case 'pensieroso':return { browAngle: 0.4, browHeight: -3, mouthCurve: -0.15, eyeOpen: 0.85, mouthWidth: 70, headTilt: -0.04 };
+    default:          return { browAngle: 0, browHeight: 0, mouthCurve: 0, eyeOpen: 1, mouthWidth: 80, headTilt: 0 };
+  }
+}
+function processNextWord() {
+  if (wordCursor >= wordsInText.length) return;
+  const w = wordsInText[wordCursor];
+  const detected = detectEmotionForWord(w.word);
+  if (detected) { activeEmotion = detected; emotionHoldFrames = 90; }
+  wordCursor++;
+}
+
+// ============================================================
+// MOUTH
+// ============================================================
+let syllables = [];
+let currentSyllableIndex = 0;
+let syllableTimer = 0;
+let framesPerSyllable = 8;
+
+function updateMouthAnimation() {
+  if (currentMood === 'sleeping') { targetMouthOpen = 0.03 + Math.abs(Math.sin(time * 0.3)) * 0.02; return; }
+  if (!isSpeaking) {
+    let base = 0.02 + Math.abs(Math.sin(time * 0.6)) * 0.04;
+    if (yawnActive > 0) base = Math.max(base, yawnActive * 0.9);
+    targetMouthOpen = base; return;
+  }
+  syllableTimer++;
+  if (syllableTimer >= framesPerSyllable) {
+    syllableTimer = 0; currentSyllableIndex++;
+    if (currentSyllableIndex >= syllables.length) currentSyllableIndex = 0;
+    const syl = syllables[currentSyllableIndex] || '';
+    framesPerSyllable = 6 + Math.random() * 4 + Math.min(4, syl.length);
+  }
+  const syl = syllables[currentSyllableIndex] || '';
+  let openness = 0.4;
+  if (syl.includes('a')) openness = 1.0;
+  else if (syl.includes('o')) openness = 0.9;
+  else if (syl.includes('e')) openness = 0.75;
+  else if (syl.includes('u')) openness = 0.6;
+  else if (syl.includes('i')) openness = 0.5;
+  else openness = 0.25;
+  openness += (Math.random() - 0.5) * 0.15;
+  targetMouthOpen = Math.max(0.05, Math.min(1, openness));
+}
+
+// ============================================================
+// ANIMATIONS
+// ============================================================
+function updateEmotionAnimation() {
+  if (emotionHoldFrames > 0) { emotionHoldFrames--; if (emotionHoldFrames === 0) activeEmotion = 'neutro'; }
+  const params = emotionParams(activeEmotion);
+  Object.keys(params).forEach(k => targetEmotion[k] = params[k]);
+
+  if (currentMood === 'sleeping') {
+    targetEmotion.eyeOpen = 0; targetEmotion.browHeight = 3; targetEmotion.mouthCurve = 0; targetEmotion.headTilt = 0.05;
+  } else if (currentMood === 'greeting') {
+    targetEmotion.eyeOpen = 1.1; targetEmotion.browHeight = -3; targetEmotion.mouthCurve = 0.5; targetEmotion.headTilt = 0.02;
+  } else if (aiProcessing) {
+    const p = emotionParams('pensieroso'); Object.keys(p).forEach(k => targetEmotion[k] = p[k]);
+  } else if (micListening && currentMood === 'awake' && !isSpeaking && activeEmotion === 'neutro') {
+    targetEmotion.eyeOpen = 1.3; targetEmotion.browHeight = -9; targetEmotion.browAngle = 0.4; targetEmotion.mouthCurve = 0.3; targetEmotion.headTilt = 0.08;
+  }
+  const speed = currentMood === 'greeting' ? 0.20 : (currentMood === 'sleeping' ? 0.06 : 0.10);
+  Object.keys(currentEmotion).forEach(k => { currentEmotion[k] = lerp(currentEmotion[k], targetEmotion[k], speed); });
+}
+
+function updateBreath() {
+  const speedFactor = currentMood === 'sleeping' ? 0.45 : 1;
+  breathPhaseA += 0.018 * speedFactor; breathPhaseB += 0.037 * speedFactor; breathPhaseC += 0.008 * speedFactor;
+  currentBreathOffset = Math.sin(breathPhaseA) * 2.5 + Math.sin(breathPhaseB) * 0.8 + Math.sin(breathPhaseC) * 1.2;
+  breathCycleTimer++;
+  if (breathCycleTimer > breathCycleDuration) { breathCycleTimer = 0; breathCycleDuration = 180 + Math.random() * 180; }
+}
+function getBreathOffset() { return currentBreathOffset; }
+
+function startBlink(double) {
+  blinkPhase = 'closing'; blinkPhaseTimer = 0;
+  blinkCloseDuration = 4 + Math.floor(Math.random() * 3); blinkOpenDuration = 4 + Math.floor(Math.random() * 3);
+  blinkWantsDouble = !!double;
+}
+function updateBlink() {
+  if (currentMood === 'sleeping') { eyeBlink = 0; return; }
+  if (forcedBlinkQueue > 0 && blinkPhase === 'idle') { startBlink(false); forcedBlinkQueue--; }
+  switch (blinkPhase) {
+    case 'idle':
+      blinkNextDelay++;
+      if (blinkNextDelay >= blinkPauseMin) { blinkNextDelay = 0; startBlink(Math.random() < 0.2); }
+      eyeBlink = lerp(eyeBlink, 0, 0.5); break;
+    case 'closing':
+      blinkPhaseTimer++; eyeBlink = Math.min(1, blinkPhaseTimer / blinkCloseDuration);
+      if (blinkPhaseTimer >= blinkCloseDuration) { blinkPhase = 'opening'; blinkPhaseTimer = 0; } break;
+    case 'opening':
+      blinkPhaseTimer++; eyeBlink = Math.max(0, 1 - blinkPhaseTimer / blinkOpenDuration);
+      if (blinkPhaseTimer >= blinkOpenDuration) {
+        if (blinkWantsDouble) { blinkWantsDouble = false; blinkPhase = 'double-wait'; blinkPhaseTimer = 0; }
+        else { blinkPhase = 'idle'; blinkNextDelay = 0; blinkPauseMin = 150 + Math.floor(Math.random() * 200); }
+      } break;
+    case 'double-wait':
+      blinkPhaseTimer++; eyeBlink = 0;
+      if (blinkPhaseTimer >= blinkDoubleGapDuration) startBlink(false); break;
+  }
+}
+
+function updateYawn() {
+  if (yawnActive > 0) {
+    yawnPhase++;
+    const totalFrames = 120;
+    if (yawnPhase < 40) yawnActive = yawnPhase / 40;
+    else if (yawnPhase < 80) yawnActive = 1;
+    else if (yawnPhase < totalFrames) yawnActive = 1 - (yawnPhase - 80) / 40;
+    else yawnActive = 0;
+  }
+}
+function updateMouthTwitch() {
+  if (isSpeaking || currentMood === 'sleeping' || currentMood === 'greeting') {
+    mouthTwitchActive = lerp(mouthTwitchActive, 0, 0.15); mouthTwitchTimer = 0; return;
+  }
+  mouthTwitchTimer++;
+  if (mouthTwitchTimer > mouthTwitchNextAt && mouthTwitchActive < 0.01) {
+    mouthTwitchActive = 0.01; mouthTwitchPhase = 0; mouthTwitchDir = Math.random() < 0.5 ? 1 : -1;
+  }
+  if (mouthTwitchActive > 0) {
+    mouthTwitchPhase++;
+    const totalFrames = 45 + Math.random() * 20;
+    if (mouthTwitchPhase < totalFrames * 0.35) mouthTwitchActive = mouthTwitchPhase / (totalFrames * 0.35);
+    else if (mouthTwitchPhase < totalFrames * 0.65) mouthTwitchActive = 1;
+    else if (mouthTwitchPhase < totalFrames) mouthTwitchActive = 1 - (mouthTwitchPhase - totalFrames * 0.65) / (totalFrames * 0.35);
+    else { mouthTwitchActive = 0; mouthTwitchTimer = 0; mouthTwitchNextAt = rand(20, 60) * 60; }
+  }
+}
+function updateBrowTwitch() {
+  if (aiProcessing) {
+    const cycle = 600; const phase = (Date.now() % cycle) / cycle;
+    let amount = 0;
+    if (phase < 0.15) amount = phase / 0.15;
+    else if (phase < 0.35) amount = 1 - (phase - 0.15) / 0.20;
+    else amount = 0;
+    browTwitchAmount = lerp(browTwitchAmount, amount * 2.2, 0.35); browTwitchActive = amount; return;
+  }
+  if (isSpeaking || currentMood === 'sleeping' || currentMood === 'greeting') {
+    browTwitchActive = lerp(browTwitchActive, 0, 0.15); browTwitchAmount = lerp(browTwitchAmount, 0, 0.1); return;
+  }
+  browTwitchTimer++;
+  if (browTwitchTimer > browTwitchNextAt && browTwitchActive < 0.01) { browTwitchActive = 0.01; browTwitchPhase = 0; }
+  if (browTwitchActive > 0) {
+    browTwitchPhase++;
+    const totalFrames = 40 + Math.random() * 30;
+    if (browTwitchPhase < totalFrames * 0.4) browTwitchActive = browTwitchPhase / (totalFrames * 0.4);
+    else if (browTwitchPhase < totalFrames * 0.6) browTwitchActive = 1;
+    else if (browTwitchPhase < totalFrames) browTwitchActive = 1 - (browTwitchPhase - totalFrames * 0.6) / (totalFrames * 0.4);
+    else { browTwitchActive = 0; browTwitchTimer = 0; browTwitchNextAt = rand(15, 45) * 60; }
+  }
+  const targetAmount = browTwitchActive * (2 + Math.random() * 2);
+  browTwitchAmount = lerp(browTwitchAmount, targetAmount, 0.15);
+}
+function updateHeadDrift() {
+  if (aiProcessing) { headDriftTarget = Math.sin(Date.now() / 900) * 0.03; headDriftCurrent = lerp(headDriftCurrent, headDriftTarget, 0.05); return; }
+  if (isSpeaking || currentMood === 'sleeping' || currentMood === 'greeting') { headDriftTarget = 0; headDriftCurrent = lerp(headDriftCurrent, 0, 0.08); return; }
+  headDriftTimer++;
+  if (headDriftTimer > headDriftNextAt) { headDriftTarget = (Math.random() - 0.5) * 0.06; headDriftTimer = 0; headDriftNextAt = 90 + Math.random() * 180; }
+  headDriftCurrent = lerp(headDriftCurrent, headDriftTarget, 0.02);
+}
+function updatePupilDilation() {
+  if (currentMood === 'sleeping') return;
+  pupilTimer++;
+  if (pupilTimer > pupilNextAt) { pupilScaleTarget = 0.85 + Math.random() * 0.30; pupilTimer = 0; pupilNextAt = 120 + Math.random() * 240; }
+  pupilScale = lerp(pupilScale, pupilScaleTarget, 0.02);
+}
+function updateWander() {
+  if (isSpeaking || currentMood === 'sleeping' || currentMood === 'greeting' || mouseIsActive || aiProcessing) { wanderActive = false; return; }
+  wanderTimer++;
+  if (wanderTimer > wanderNextAt) { wanderTargetX = (Math.random() - 0.5) * 10; wanderTargetY = (Math.random() - 0.5) * 6; wanderTimer = 0; wanderNextAt = 90 + Math.random() * 180; wanderActive = true; wanderReturnTimer = 0; }
+  if (wanderActive) { wanderReturnTimer++; if (wanderReturnTimer > 120) { wanderTargetX = 0; wanderTargetY = 0; wanderActive = false; } }
+}
+function updateSaccades() {
+  if (isSpeaking || currentMood === 'sleeping') { saccadeX = lerp(saccadeX, 0, 0.2); saccadeY = lerp(saccadeY, 0, 0.2); return; }
+  saccadeTimer++;
+  if (saccadeTimer > saccadeNextAt) { saccadeTargetX = (Math.random() - 0.5) * 2; saccadeTargetY = (Math.random() - 0.5) * 1.5; saccadeTimer = 0; saccadeNextAt = 15 + Math.random() * 25; }
+  saccadeX = lerp(saccadeX, saccadeTargetX, 0.4); saccadeY = lerp(saccadeY, saccadeTargetY, 0.4);
+}
+function updateReflection() {
+  if (isSpeaking || currentMood !== 'awake') { reflectionActive = 0; reflectionTimer = 0; return; }
+  reflectionTimer++;
+  if (reflectionTimer > reflectionNextAt && reflectionActive === 0) { reflectionActive = 0.01; reflectionPhase = 0; }
+  if (reflectionActive > 0) {
+    reflectionPhase++;
+    const totalFrames = reflectionTotalFrames;
+    if (reflectionPhase < totalFrames * 0.2) reflectionActive = reflectionPhase / (totalFrames * 0.2);
+    else if (reflectionPhase < totalFrames * 0.7) reflectionActive = 1;
+    else if (reflectionPhase < totalFrames) reflectionActive = 1 - (reflectionPhase - totalFrames * 0.7) / (totalFrames * 0.3);
+    else { reflectionActive = 0; reflectionTimer = 0; reflectionNextAt = 1500 + Math.random() * 1500; }
+  }
+}
+
+document.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * LW;
+  const py = (e.clientY - rect.top) / rect.height * LH;
+  canvasMouseX = px; canvasMouseY = py;
+  hoveredButtonId = hitTestButtons(px, py);
+
+  const ccx = rect.left + rect.width / 2; const ccy = rect.top + rect.height / 2;
+  const dx = e.clientX - ccx, dy = e.clientY - ccy;
+  const dist = Math.sqrt(dx*dx + dy*dy); const maxOffset = 6;
+  if (dist > 0) { const factor = Math.min(1, dist / 400); eyeTargetX = (dx / dist) * maxOffset * factor; eyeTargetY = (dy / dist) * maxOffset * factor; }
+  mouseIsActive = true; mouseMovedTimer = 0;
+});
+function updateGaze() {
+  mouseMovedTimer++; if (mouseMovedTimer > 180) mouseIsActive = false;
+  if (currentMood === 'sleeping') return;
+  if (aiProcessing) { eyeTargetX = 4; eyeTargetY = -3; }
+  else if (currentMood === 'greeting') {
+    const rect = canvas.getBoundingClientRect(); const ccx = rect.left + rect.width / 2; const ccy = rect.top + rect.height / 2;
+    const dx = clickTargetX - ccx, dy = clickTargetY - ccy; const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist > 0) { const factor = Math.min(1, dist / 400); eyeTargetX = (dx / dist) * 8 * factor; eyeTargetY = (dy / dist) * 8 * factor; }
+  } else if (isSpeaking) { eyeTargetX = Math.sin(time * 0.5) * 1.5; eyeTargetY = Math.sin(time * 0.7) * 1.0; }
+  else if (micListening) { eyeTargetX = 0; eyeTargetY = 0.5; }
+  else if (mouseIsActive) { /* segue il mouse */ }
+  else if (wanderActive) { eyeTargetX = wanderTargetX; eyeTargetY = wanderTargetY; }
+  else { eyeTargetX = lerp(eyeTargetX, 0, 0.03); eyeTargetY = lerp(eyeTargetY, 0, 0.03); }
+  const gazeSpeed = (currentMood === 'greeting' || aiProcessing) ? 0.10 : 0.08;
+  eyeCurrentX = lerp(eyeCurrentX, eyeTargetX, gazeSpeed); eyeCurrentY = lerp(eyeCurrentY, eyeTargetY, gazeSpeed);
+}
+function updateGlitch() {
+  glitchTimer++;
+  if (glitchIntensity > 0) { glitchIntensity -= 0.05; if (glitchIntensity < 0) glitchIntensity = 0; }
+  if (currentMood === 'sleeping') return;
+  if (glitchTimer > glitchNextAt) { glitchIntensity = 0.6 + Math.random() * 0.4; glitchTimer = 0; glitchNextAt = 600 + Math.random() * 1200; }
+}
+function updateSleepZs(cx, cy) {
+  if (currentMood !== 'sleeping') { sleepZs = []; return; }
+  zSpawnTimer++;
+  if (zSpawnTimer > 30) {
+    zSpawnTimer = 0;
+    sleepZs.push({ x: cx + 60 + Math.random() * 30, y: cy - 100, vy: -0.3 - Math.random() * 0.3, vx: 0.2 + Math.random() * 0.3, size: 0.5 + Math.random() * 0.3, alpha: 1, rotation: (Math.random() - 0.5) * 0.3 });
+  }
+  for (let i = sleepZs.length - 1; i >= 0; i--) {
+    const z = sleepZs[i]; z.y += z.vy; z.x += z.vx; z.alpha -= 0.006; z.size += 0.003;
+    if (z.alpha <= 0) sleepZs.splice(i, 1);
+  }
+}
+function drawSleepZs() {
+  ctx.save();
+  sleepZs.forEach(z => {
+    ctx.save(); ctx.globalAlpha = z.alpha; ctx.translate(z.x, z.y); ctx.rotate(z.rotation);
+    ctx.fillStyle = COLOR_MAIN; ctx.shadowBlur = 12; ctx.shadowColor = COLOR_GLOW;
+    ctx.font = `bold ${Math.round(z.size * 40)}px 'Courier New'`; ctx.textAlign = 'center'; ctx.fillText('Z', 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+// ============================================================
+// PULSANTI CANVAS
+// ============================================================
+const BTN_LAYOUT = {
+  marginX: 24,
+  marginY: 24,
+  buttonW: 48,
+  buttonH: 42,
+  gapY: 14,
+  labelGap: 4,
+  labelFontSize: 8,
+  letterFontSize: 16,
+  radius: 7,
+  importWidth: 110,
+  importHeight: 24,
+  importFontSize: 11,
+  fileNameFontSize: 9
+};
+
+const BTN_LABELS = {
+  A: 'ai-context',
+  T: 'ai-text',
+  L: 'read',
+  S: 'subtitle',
+  M: 'mute',
+  N: 'listen'
+};
+
+function computeButtons() {
+  const { marginX, marginY, buttonW, buttonH, gapY, radius, importWidth, importHeight } = BTN_LAYOUT;
+  const list = [];
+  
+  // Colonna sinistra (3 pulsanti: A, T, L)
+  const colHeight = buttonH * 3 + gapY * 2;
+  const colTop = (LH - colHeight) / 2;
+  const xL = marginX;
+  ['A', 'T', 'L'].forEach((id, i) => {
+    list.push({ id, x: xL, y: colTop + i * (buttonH + gapY), w: buttonW, h: buttonH, label: BTN_LABELS[id], radius });
+  });
+
+  // Colonna destra (3 pulsanti: S, M, N)
+  const xR = LW - marginX - buttonW;
+  ['S', 'M', 'N'].forEach((id, i) => {
+    list.push({ id, x: xR, y: colTop + i * (buttonH + gapY), w: buttonW, h: buttonH, label: BTN_LABELS[id], radius });
+  });
+  
+  list.push({ id: 'IMPORT', label: '📁 OPEN FILE', x: LW - marginX - importWidth, y: marginY, w: importWidth, h: importHeight, radius });
+  return list;
+}
+
+function hitTestButtons(px, py) {
+  const list = computeButtons();
+  for (const b of list) {
+    if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) return b.id;
+  }
+  return null;
+}
+
+function buttonIsActive(id) {
+  if (id === 'A') return aiMode && aiWithContext;
+  if (id === 'T') return aiMode && !aiWithContext;
+  if (id === 'L') return readActive;
+  if (id === 'S') return subtitlesOn;
+  if (id === 'M') return muted;
+  if (id === 'N') return micEnabled && micState === 'active';
+  if (id === 'IMPORT') return customAiContext !== null;
+  return false;
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawCanvasButtons() {
+  const list = computeButtons();
+  
+  // Linee guida verticali
+  const colHeight = BTN_LAYOUT.buttonH * 3 + BTN_LAYOUT.gapY * 2;
+  const colTop = (LH - colHeight) / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(BTN_LAYOUT.marginX + BTN_LAYOUT.buttonW/2, colTop + BTN_LAYOUT.buttonH/2);
+  ctx.lineTo(BTN_LAYOUT.marginX + BTN_LAYOUT.buttonW/2, colTop + colHeight - BTN_LAYOUT.buttonH/2);
+  ctx.moveTo(LW - BTN_LAYOUT.marginX - BTN_LAYOUT.buttonW/2, colTop + BTN_LAYOUT.buttonH/2);
+  ctx.lineTo(LW - BTN_LAYOUT.marginX - BTN_LAYOUT.buttonW/2, colTop + colHeight - BTN_LAYOUT.buttonH/2);
+  ctx.strokeStyle = 'rgba(0,255,136,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  list.forEach(b => {
+    const active = buttonIsActive(b.id);
+    const hover = hoveredButtonId === b.id;
+    const isImport = b.id === 'IMPORT';
+    
+    ctx.save();
+    if (active) {
+      ctx.fillStyle = 'rgba(0,255,136,0.35)';
+      ctx.strokeStyle = '#00ff88';
+      ctx.shadowBlur = 18; ctx.shadowColor = 'rgba(0,255,136,0.9)';
+    } else if (hover) {
+      ctx.fillStyle = 'rgba(0,255,136,0.15)';
+      ctx.strokeStyle = 'rgba(0,255,136,0.85)';
+      ctx.shadowBlur = 12; ctx.shadowColor = 'rgba(0,255,136,0.6)';
+    } else {
+      ctx.fillStyle = 'rgba(0,25,12,0.6)';
+      ctx.strokeStyle = 'rgba(0,255,136,0.4)';
+      ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,255,136,0.2)';
+    }
+    ctx.lineWidth = active ? 2 : 1.2;
+    roundRect(b.x, b.y, b.w, b.h, b.radius);
+    ctx.fill(); ctx.stroke();
+
+    ctx.shadowBlur = active ? 12 : 4;
+    ctx.shadowColor = active ? 'rgba(0,255,136,1)' : 'rgba(0,255,136,0.4)';
+    ctx.fillStyle = active ? '#ffffff' : (hover ? '#bfffe0' : 'rgba(0,255,157,0.85)');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    
+    if (isImport) {
+      ctx.font = `bold ${BTN_LAYOUT.importFontSize}px 'Courier New'`;
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 0.5);
+    } else {
+      ctx.font = `bold ${BTN_LAYOUT.letterFontSize}px 'Courier New'`;
+      ctx.fillText(b.id, b.x + b.w / 2, b.y + b.h / 2 + 0.5);
+    }
+    ctx.restore();
+
+    if (!isImport) {
+      ctx.save();
+      ctx.font = `${BTN_LAYOUT.labelFontSize}px 'Courier New'`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillStyle = active ? 'rgba(0,255,170,0.95)' : (hover ? 'rgba(0,255,157,0.8)' : 'rgba(0,255,157,0.5)');
+      if (active) { ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,255,136,0.6)'; }
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h + BTN_LAYOUT.labelGap);
+      ctx.restore();
+    }
+  });
+
+  if (importedFileName) {
+    const impBtn = list.find(b => b.id === 'IMPORT');
+    if (impBtn) {
+      ctx.save();
+      ctx.font = `${BTN_LAYOUT.fileNameFontSize}px 'Courier New'`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(0,255,170,0.8)';
+      ctx.shadowBlur = 4; ctx.shadowColor = 'rgba(0,255,136,0.4)';
+      let name = importedFileName;
+      const maxW = impBtn.w;
+      while (name.length > 3 && ctx.measureText(name).width > maxW) {
+        name = name.slice(0, -2) + '…';
+      }
+      ctx.fillText(name, impBtn.x + impBtn.w / 2, impBtn.y + impBtn.h + 4);
+      ctx.restore();
+    }
+  }
+}
+
+function handleButtonClick(id) {
+  if (id === 'A') {
+    if (aiMode && aiWithContext) exitAiMode();
+    else enterAiMode(true);
+  } else if (id === 'T') {
+    if (aiMode && !aiWithContext) exitAiMode();
+    else enterAiMode(false);
+  } else if (id === 'L') {
+    if (readActive) stopReading(); else startReading();
+  } else if (id === 'S') {
+    subtitlesOn = !subtitlesOn;
+    try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
+    if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+    toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
+  } else if (id === 'M') {
+    muted = !muted;
+    if (muted) { stopSpeaking(); toast('🔇 muted'); }
+    else { toast('🔊 audio on'); }
+    try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
+  } else if (id === 'N') {
+    micEnabled = !micEnabled;
+    try { localStorage.setItem('avatar_mic', micEnabled ? '1' : '0'); } catch (err) {}
+    if (micEnabled) { micAsked = false; startMic(true); toast('🎙 mic on'); }
+    else { stopMic(); toast('🎙 mic off'); }
+  } else if (id === 'IMPORT') {
+    if (customAiContext !== null) {
+      customAiContext = null;
+      importedFileName = '';
+      aiContext = ''; aiContextLoaded = false; aiHistory = [];
+      toast('📄 file context cleared');
+    } else {
+      contextFileInput.click();
+    }
+  }
+}
+
+// ============================================================
+// DRAWING
+// ============================================================
+function drawCyberLine(x1, y1, x2, y2, alpha = 1, color = COLOR_MAIN) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+function drawCyberEyebrow(x, y, side, color, glow) {
+  ctx.save();
+  const angle = currentEmotion.browAngle * 0.22 * side; const offset = currentEmotion.browHeight * 0.45 - browTwitchAmount;
+  ctx.strokeStyle = color; ctx.lineWidth = 3.2; ctx.lineCap = 'round'; ctx.shadowBlur = 10; ctx.shadowColor = glow;
+  ctx.beginPath(); ctx.moveTo(x - 16, y + offset - angle * 15); ctx.lineTo(x + 16, y + offset + angle * 15); ctx.stroke();
+  ctx.restore();
+}
+function drawCyberEye(x, y, color, glow) {
+  ctx.save();
+  ctx.shadowBlur = 13; ctx.shadowColor = glow; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+  const eyeHeight = Math.max(0.12, currentEmotion.eyeOpen) * (1 - Math.min(1, eyeBlink));
+  if (currentMood === 'sleeping' || eyeHeight < 0.22) {
+    ctx.beginPath(); ctx.moveTo(x - 16, y); ctx.quadraticCurveTo(x, y + 7, x + 16, y); ctx.stroke(); ctx.restore(); return;
+  }
+  const halfH = 10.5 * Math.min(1, eyeHeight);
+  ctx.beginPath(); ctx.moveTo(x - 17, y - halfH); ctx.lineTo(x + 16, y - halfH); ctx.lineTo(x + 11, y + halfH); ctx.lineTo(x - 12, y + halfH); ctx.closePath(); ctx.fill();
+  const px = x + Math.max(-5, Math.min(5, eyeCurrentX + saccadeX)); const py = y + Math.max(-3, Math.min(3, eyeCurrentY + saccadeY));
+  const pupilW = 7 * pupilScale; const pupilH = Math.max(3, 11 * pupilScale * Math.min(1, eyeHeight));
+  ctx.shadowBlur = 0; ctx.fillStyle = '#062016'; ctx.fillRect(px - pupilW / 2, py - pupilH / 2, pupilW, pupilH);
+  ctx.fillStyle = '#f0fff8'; ctx.beginPath(); ctx.arc(px - 1.5, py - 2, 1.8, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function drawCyberMouth(x, y, color, glow) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = 'rgba(0,15,9,0.94)'; ctx.lineWidth = 2.5; ctx.shadowBlur = 14; ctx.shadowColor = glow;
+  const combinedOpen = currentMood === 'sleeping' ? 0 : Math.max(mouthOpen, yawnActive * 0.9);
+  const mouthWidth = 56 + (currentEmotion.mouthWidth - 80) * 0.22; const openHeight = 42 * combinedOpen;
+  const twitchOffsetY = mouthTwitchActive * mouthTwitchDir * 1.5;
+  if (openHeight > 5.5) {
+    ctx.beginPath(); ctx.ellipse(x, y + twitchOffsetY, mouthWidth / 2, Math.max(3, openHeight / 2), 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    if (combinedOpen > 0.5) {
+      ctx.fillStyle = 'rgba(0,255,157,0.55)';
+      ctx.beginPath(); ctx.ellipse(x, y + twitchOffsetY + openHeight * 0.16, mouthWidth / 3, Math.max(2, openHeight / 4), 0, 0, Math.PI * 2); ctx.fill();
+    }
+  } else {
+    const curve = currentEmotion.mouthCurve + reflectionActive * -0.4 + mouthTwitchActive * mouthTwitchDir * 0.7;
+    ctx.beginPath(); ctx.moveTo(x - mouthWidth / 2, y + twitchOffsetY); ctx.quadraticCurveTo(x, y + twitchOffsetY + curve * 5, x + mouthWidth / 2, y + twitchOffsetY); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawAvatar() {
+  ctx.clearRect(0, 0, LW, LH); time += 0.02;
+  updateMoodState(); updateMouthAnimation(); updateEmotionAnimation(); updateBreath();
+  updateBlink(); updateYawn(); updateMouthTwitch(); updateBrowTwitch(); updateHeadDrift();
+  updatePupilDilation(); updateWander(); updateSaccades(); updateReflection(); updateGaze();
+  updateGlitch(); updateWaves();
+  mouthOpen += (targetMouthOpen - mouthOpen) * 0.35;
+
+  const cx = 210, cy = 205 + getBreathOffset(), ox = LW / 2 - 210, oy = LH / 2 - 205;
+  const faceColor = '#00ff9d', faceGlow = 'rgba(0,255,157,0.8)';
+  updateSleepZs(cx, cy);
+  const intensity = currentMood === 'sleeping' ? 0.04 : (currentMood === 'greeting' ? 0.18 : (isSpeaking ? 0.16 + mouthOpen * 0.12 : 0.075));
+
+  ctx.save(); ctx.translate(ox, oy);
+  const halo = ctx.createRadialGradient(cx, cy, 25, cx, cy, 190 * ZOOM);
+  halo.addColorStop(0, `rgba(0,255,157,${intensity})`); halo.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = halo; ctx.fillRect(-ox, -oy, LW, LH); ctx.restore();
+
+  const particleIntensity = isSpeaking ? Math.min(1, 0.3 + mouthOpen * 0.7) : (currentMood === 'sleeping' ? 0.02 : (aiProcessing ? 0.18 : 0.10));
+  particles.forEach(p => { p.update(particleIntensity); p.draw(); });
+
+  ctx.save(); ctx.translate(ox, oy); drawWaves(cx, cy); ctx.restore();
+
+  ctx.save(); ctx.translate(ox, oy); ctx.translate(cx, cy); ctx.rotate(currentEmotion.headTilt + headDriftCurrent); ctx.translate(-cx, -cy); ctx.translate(0, getBreathOffset());
+
+  ctx.strokeStyle = faceColor; ctx.lineWidth = 2.6; ctx.shadowBlur = 20; ctx.shadowColor = faceGlow;
+  ctx.beginPath(); ctx.moveTo(125, 145); ctx.quadraticCurveTo(135, 85, 210, 82); ctx.quadraticCurveTo(285, 85, 295, 145); ctx.lineTo(287, 242); ctx.quadraticCurveTo(278, 296, 210, 310); ctx.quadraticCurveTo(142, 296, 133, 242); ctx.closePath(); ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(0,255,157,0.38)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(143, 150); ctx.quadraticCurveTo(150, 105, 210, 102); ctx.quadraticCurveTo(270, 105, 277, 150); ctx.stroke();
+  ctx.strokeStyle = faceColor; ctx.lineWidth = 2;
+  ctx.strokeRect(112, 170, 18, 48); ctx.strokeRect(290, 170, 18, 48);
+  drawCyberLine(115, 181, 125, 181, 0.9, faceColor); drawCyberLine(295, 181, 305, 181, 0.9, faceColor);
+  drawCyberEyebrow(174, 157, 1, faceColor, faceGlow); drawCyberEyebrow(246, 157, -1, faceColor, faceGlow);
+  drawCyberEye(174, 183, faceColor, faceGlow); drawCyberEye(246, 183, faceColor, faceGlow);
+  ctx.strokeStyle = 'rgba(0,255,157,0.58)'; ctx.lineWidth = 1.7;
+  ctx.beginPath(); ctx.moveTo(210, 191); ctx.lineTo(203, 218); ctx.lineTo(215, 220); ctx.stroke();
+  drawCyberMouth(210, 245, faceColor, faceGlow);
+  drawCyberLine(149, 264, 166, 279, 0.55, faceColor); drawCyberLine(166, 279, 183, 279, 0.55, faceColor);
+  drawCyberLine(271, 264, 254, 279, 0.55, faceColor); drawCyberLine(254, 279, 237, 279, 0.55, faceColor);
+  drawCyberLine(185, 291, 235, 291, 0.7, faceColor); drawCyberLine(192, 300, 228, 300, 0.4, faceColor);
+  ctx.restore();
+
+  if (glitchIntensity > 0.2 && currentMood !== 'sleeping') {
+    ctx.save(); ctx.globalAlpha = glitchIntensity * 0.28; ctx.fillStyle = faceColor;
+    for (let i = 0; i < 4; i++) { const y = Math.random() * LH; ctx.fillRect(0, y, LW, 1 + Math.random() * 3); }
+    ctx.restore();
+  }
+
+  ctx.save(); ctx.translate(ox, oy); drawSleepZs(); ctx.restore();
+
+  ctx.save();
+  const m = 25, l = 23, R = LW - m, B = LH - m;
+  drawCyberLine(m, m + l, m, m, 0.85, faceColor); drawCyberLine(m, m, m + l, m, 0.85, faceColor);
+  drawCyberLine(R - l, m, R, m, 0.85, faceColor); drawCyberLine(R, m, R, m + l, 0.85, faceColor);
+  drawCyberLine(m, B - l, m, B, 0.85, faceColor); drawCyberLine(m, B, m + l, B, 0.85, faceColor);
+  drawCyberLine(R - l, B, R, B, 0.85, faceColor); drawCyberLine(R, B - l, R, B, 0.85, faceColor);
+  
+  ctx.shadowBlur = 8; ctx.shadowColor = faceGlow; ctx.fillStyle = 'rgba(0,255,157,0.72)'; ctx.font = '11px monospace';
+  ctx.textAlign = 'left'; ctx.fillText('CB-01', m + 14, m + 20);
+
+  // Scritta dell'AI spostata in basso a sinistra, discreta e piccola
+  ctx.fillStyle = 'rgba(0,255,157,0.5)'; 
+  ctx.font = '9px monospace';
+  ctx.fillText(`AI: ${aiProvider.toUpperCase()}`, m + 14, B - 10);
+
+  ctx.textAlign = 'right';
+  const label = aiMode ? (aiProcessing ? 'AI THINKING' : (aiWithContext ? 'AI CONTEXT' : 'AI MODE')) : (currentMood === 'sleeping' ? 'ZzZ' : (isSpeaking ? 'VOICE ACTIVE' : (currentMood === 'awake' ? (micListening ? 'LISTENING' : 'IDLE') : (currentMood === 'greeting' ? 'HELLO' : 'IDLE'))));
+  ctx.fillText(label, R - 14, B - 9);
+  ctx.restore();
+
+  drawCanvasButtons();
+  drawMicDebug();
+}
+
+// ============================================================
+// MOOD STATE MACHINE & BREAKS
+// ============================================================
+function enterState(state, durationMs) { currentMood = state; moodStartTime = Date.now(); moodDurationMs = durationMs || 0; }
+function updateMoodState() {
+  const now = Date.now();
+  if (currentMood === 'awake') {
+    if (aiMode) return;
+    if (now >= nextMicrosleepAt) startMicrosleep();
+    else if (now >= nextSelfTalkAt) startSelfTalk();
+    else if (now >= nextYawnAt) triggerYawn();
+    else if (now >= nextExpressionAt) cycleExpression();
+  } else if (currentMood === 'sleeping') {
+    if (now - moodStartTime >= moodDurationMs) wakeFromMicrosleep();
+  } else if (currentMood === 'greeting') {
+    if (now - moodStartTime >= moodDurationMs) enterState('awake', 0);
+  }
+}
+function startMicrosleep() { const duration = rand(MOOD_CONFIG.microsleepDurationMinMs, MOOD_CONFIG.microsleepDurationMaxMs); enterState('sleeping', duration); nextMicrosleepAt = Date.now() + rand(MOOD_CONFIG.microsleepMinMs, MOOD_CONFIG.microsleepMaxMs); }
+function wakeFromMicrosleep() { enterState('awake', 0); forcedBlinkQueue = 1; nextMicrosleepAt = Date.now() + rand(MOOD_CONFIG.microsleepMinMs, MOOD_CONFIG.microsleepMaxMs); nextYawnAt = Date.now() + rand(MOOD_CONFIG.yawnMinMs, MOOD_CONFIG.yawnMaxMs); }
+function triggerYawn() { yawnActive = 0.01; yawnPhase = 0; playYawn(); nextYawnAt = Date.now() + rand(MOOD_CONFIG.yawnMinMs, MOOD_CONFIG.yawnMaxMs) * (breakCount > 0 ? 0.5 : 1); }
+function cycleExpression() { let pick = AWAKE_EXPRESSIONS[Math.floor(Math.random() * AWAKE_EXPRESSIONS.length)]; if (breakCount > 0 && Math.random() < 0.5) pick = Math.random() < 0.5 ? 'assonnato' : 'annoiato'; activeEmotion = pick; emotionHoldFrames = 180 + Math.floor(Math.random() * 360); nextExpressionAt = Date.now() + rand(MOOD_CONFIG.expressionMinMs, MOOD_CONFIG.expressionMaxMs); }
+function startSelfTalk() { if (currentMood !== 'awake') return; if (document.hidden) { resetSelfTalkTimer(); return; } const phrase = SELF_TALK_PHRASES[Math.floor(Math.random() * SELF_TALK_PHRASES.length)]; enterState('talking', 0); setTimeout(() => { speakText(phrase, AUDIO_CONFIG.selfTalkVolume, () => { setTimeout(() => { if (currentMood === 'talking') enterState('awake', 0); }, 500); }); }, 300); resetSelfTalkTimer(); }
+function resetSelfTalkTimer() { nextSelfTalkAt = Date.now() + rand(MOOD_CONFIG.selfTalkMinMs, MOOD_CONFIG.selfTalkMaxMs); }
+
+let firedEvents = new Set();
+let lastFiredDate = new Date().toDateString();
+function checkScheduledEvents() {
+  if (aiMode) return;
+  const now = new Date(); const dateKey = now.toDateString();
+  if (dateKey !== lastFiredDate) { firedEvents.clear(); lastFiredDate = dateKey; }
+  const hh = now.getHours(); const mm = now.getMinutes();
+  for (const ev of SCHEDULED_EVENTS) {
+    if (ev.active !== false && ev.h === hh && ev.m === mm) {
+      const key = `${hh}-${mm}`;
+      if (firedEvents.has(key)) continue;
+      firedEvents.add(key); fireScheduledEvent(ev);
+    }
+  }
+}
+function fireScheduledEvent(ev) {
+  if (document.hidden) return;
+  stopSpeaking();
+  const vol = ev.volume === 'low' ? AUDIO_CONFIG.lowVolume : AUDIO_CONFIG.scheduledVolume;
+  const safetyMs = ev.sequence ? Math.max(45000, ev.sequence.length * 3500) : 15000;
+  const returnToAwake = () => { if (currentMood === 'talking') enterState('awake', 0); };
+  enterState('talking', 0);
+  setTimeout(() => { if (ev.text) speakText(ev.text, vol, returnToAwake); else if (ev.sequence) speakSequence(ev.sequence, vol, returnToAwake); else returnToAwake(); }, 300);
+  setTimeout(() => { if (currentMood === 'talking') { stopSpeaking(); returnToAwake(); } }, safetyMs);
+}
+
+// ============================================================
+// SPEECH
+// ============================================================
+let subtitlesOn = false;
+let currentSubtitle = '';
+let subtitleHideTimer = null;
+try { if (localStorage.getItem('avatar_subs') === '1') subtitlesOn = true; } catch (e) {}
+
+function showSubtitle(text) { currentSubtitle = text; clearTimeout(subtitleHideTimer); if (subtitlesOn && text && text.trim()) { subtitleEl.textContent = text.trim(); subtitleEl.classList.add('show'); } }
+function hideSubtitle(delayMs) { clearTimeout(subtitleHideTimer); subtitleHideTimer = setTimeout(() => { currentSubtitle = ''; subtitleEl.classList.remove('show'); }, delayMs || 0); }
+
+let utterance = null;
+let lastSpeechEnd = 0;
+function speakText(text, volume, onEnd) {
+  if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
+  if (!text || !text.trim()) { if (onEnd) onEnd(); return; }
+
+  showSubtitle(text);
+  syllables = getSyllables(text); wordsInText = extractWords(text);
+  currentSyllableIndex = 0; syllableTimer = 0; framesPerSyllable = 8; wordCursor = 0;
+  activeEmotion = 'neutro'; emotionHoldFrames = 0;
+
+  utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = getBrowserSpeechLanguage(); utterance.rate = 0.95;
+  const maleKeywords = ['male', 'uomo', 'maschile', 'cosimo', 'diego', 'luca', 'paolo', 'roberto', 'andrea'];
+  const isMale = selectedVoice && maleKeywords.some(k => (selectedVoice.name || '').toLowerCase().includes(k));
+  utterance.pitch = isMale ? 1.0 : 0.7;
+  utterance.volume = muted ? 0 : 1.0;
+  if (selectedVoice) utterance.voice = selectedVoice;
+
+  let ended = false;
+  const finish = () => { if (ended) return; ended = true; isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro'; lastSpeechEnd = Date.now(); hideSubtitle(700); if (onEnd) onEnd(); };
+  utterance.onstart = () => { isSpeaking = true; };
+  utterance.onboundary = (e) => { if (e.name === 'word') processNextWord(); };
+  utterance.onend = finish; utterance.onerror = finish; speechSynthesis.speak(utterance);
+}
+function speakSequence(seq, volume, onDone) {
+  let i = 0;
+  function next() { if (i >= seq.length) { if (onDone) onDone(); return; } const text = seq[i++]; if (!text || !text.trim()) { setTimeout(next, 500); return; } speakText(text, volume, () => { setTimeout(next, 550); }); }
+  next();
+}
+let readActive = false, readSession = 0, readLoading = false;
+function stopSpeaking() {
+  readActive = false; readSession++;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro';
+}
+
+// ============================================================
+// LETTURA DA FILE (tasto L)
+// ============================================================
+const READ_FILE = 'audio_sourge.js';
+const READ_CHUNK_MAX = 220;
+const READ_SENTENCE_PAUSE_MS = 350;
+const READ_PARAGRAPH_PAUSE_MS = 900;
+
+function loadReadFile() {
+  return new Promise((resolve, reject) => {
+    if (customAiContext !== null) { resolve(customAiContext); return; }
+    try { delete window.AUDIO_SOURGE; } catch (e) { window.AUDIO_SOURGE = undefined; }
+    const sc = document.createElement('script'); sc.src = READ_FILE + '?t=' + Date.now();
+    sc.onload = () => { sc.remove(); resolve(window.AUDIO_SOURGE); };
+    sc.onerror = () => { sc.remove(); reject(new Error('file not found')); };
+    document.head.appendChild(sc);
+  });
+}
+function splitLong(str) {
+  const out = [];
+  while (str.length > READ_CHUNK_MAX) {
+    let cut = Math.max(str.lastIndexOf(', ', READ_CHUNK_MAX), str.lastIndexOf(' ', READ_CHUNK_MAX));
+    if (cut < 40) cut = READ_CHUNK_MAX;
+    out.push(str.slice(0, cut + 1).trim()); str = str.slice(cut + 1).trim();
+  }
+  if (str) out.push(str); return out;
+}
+function readChunks(src) {
+  if (src === undefined || src === null) return [];
+  const paras = Array.isArray(src) ? src.map(String) : String(src).split(/\n\s*\n/);
+  const out = [];
+  paras.forEach(p => {
+    const clean = p.replace(/\s+/g, ' ').trim();
+    if (!clean) return;
+    const sentences = clean.match(/[^.!?…]+[.!?…]+["'»”)\]]*\s*|[^.!?…]+$/g) || [clean];
+    const mine = []; let cur = '';
+    sentences.forEach(sn => {
+      sn = sn.trim(); if (!sn) return;
+      if (cur && (cur + ' ' + sn).length > READ_CHUNK_MAX) { mine.push(cur); cur = ''; }
+      cur = cur ? cur + ' ' + sn : sn;
+    });
+    if (cur) mine.push(cur);
+    const pieces = []; mine.forEach(m => splitLong(m).forEach(x => pieces.push(x)));
+    pieces.forEach((text, k) => out.push({ text, pause: k === pieces.length - 1 ? READ_PARAGRAPH_PAUSE_MS : READ_SENTENCE_PAUSE_MS }));
+  });
+  return out;
+}
+function stopReading() {
+  readActive = false; readSession++;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro';
+  if (!aiMode && currentMood === 'talking') enterState('awake', 0);
+  toast('📖 reading interrupted');
+}
+async function startReading() {
+  if (readLoading) return;
+  if (!('speechSynthesis' in window)) { toast('📖 voice not supported', true); return; }
+  readLoading = true; toast('📖 loading ' + (importedFileName || READ_FILE) + '…');
+  let src;
+  try { src = await loadReadFile(); if (src === undefined && typeof AUDIO_SOURGE !== 'undefined') src = AUDIO_SOURGE; }
+  catch (err) { readLoading = false; toast('📖 ' + READ_FILE + ' not found', true); return; }
+  readLoading = false;
+  const chunks = readChunks(src);
+  if (!chunks.length) { toast('📖 file empty or missing window.AUDIO_SOURGE', true); return; }
+
+  if (!audioUnlocked) { initAudioContext(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); audioUnlocked = true; }
+  if (currentMood === 'sleeping') wakeFromMicrosleep();
+  if (!aiMode) enterState('talking', 0);
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0;
+  readActive = true; const my = ++readSession;
+
+  let i = 0;
+  const next = () => {
+    if (!readActive || my !== readSession) return;
+    if (i >= chunks.length) { readActive = false; setTimeout(() => { if (!aiMode && currentMood === 'talking') enterState('awake', 0); toast('📖 end of reading'); }, 400); return; }
+    const c = chunks[i++]; const watchdogMs = 15000 + c.text.length * 250;
+    const watchdog = setTimeout(() => { if (readActive && my === readSession) speechSynthesis.cancel(); }, watchdogMs);
+    speakText(c.text, AUDIO_CONFIG.readVolume, () => { clearTimeout(watchdog); if (!readActive || my !== readSession) return; setTimeout(next, c.pause); });
+  };
+  setTimeout(next, 300);
+}
+
+// ============================================================
+// INTERACTION
+// ============================================================
+function handleInteraction(clickX, clickY) {
+  if (aiMode) return;
+  startIdleDetection();
+  if (micEnabled) startMic(false);
+  if (!audioUnlocked) { initAudioContext(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); audioUnlocked = true; }
+  if (currentMood === 'talking' && isSpeaking) stopSpeaking();
+  if (currentMood === 'sleeping') {
+    wakeFromMicrosleep(); enterState('greeting', MOOD_CONFIG.greetDurationMs); clickTargetX = clickX; clickTargetY = clickY; playGreet(); forcedBlinkQueue = 2; return;
+  }
+  if (currentMood !== 'greeting') { enterState('greeting', MOOD_CONFIG.greetDurationMs); clickTargetX = clickX; clickTargetY = clickY; playGreet(); forcedBlinkQueue = 1; }
+}
+
+function pointFromEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  let clientX = 0, clientY = 0;
+  if (e && typeof e.clientX === 'number' && e.clientX !== 0) { clientX = e.clientX; clientY = e.clientY; }
+  else if (e && e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+  else if (e && e.changedTouches && e.changedTouches[0]) { clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
+  else { return null; }
+  return { clientX, clientY, canvasX: (clientX - rect.left) / rect.width * LW, canvasY: (clientY - rect.top) / rect.height * LH };
+}
+
+document.body.addEventListener('click', (e) => {
+  const p = pointFromEvent(e);
+  if (p) {
+    const id = hitTestButtons(p.canvasX, p.canvasY);
+    if (id) { e.stopPropagation(); handleButtonClick(id); return; }
+  }
+  handleInteraction(p ? p.clientX : window.innerWidth / 2, p ? p.clientY : window.innerHeight / 2);
+}, true);
+
+document.body.addEventListener('touchstart', function(e) {
+  if (e.target.closest('.menu-btn') || e.target.closest('#hotkey-menu')) return;
+  const p = pointFromEvent(e);
+  if (p) {
+    const id = hitTestButtons(p.canvasX, p.canvasY);
+    if (id) { e.preventDefault(); handleButtonClick(id); return; }
+  }
+  e.preventDefault();
+  if (p) handleInteraction(p.clientX, p.clientY);
+}, { passive: false });
+
+document.addEventListener('visibilitychange', () => { if (document.hidden && currentMood === 'talking' && isSpeaking) { stopSpeaking(); if (!aiMode) enterState('awake', 0); } });
+
+// ============================================================
+// PROMEMORIA PAUSA + SALUTO AL RIENTRO
+// ============================================================
+const BREAK_CONFIG = { firstAfterMs: 60 * 60 * 1000, repeatEveryMs: 30 * 60 * 1000, idleThresholdMs: 5 * 60 * 1000, gapResetMs: 3 * 60 * 1000, welcomeMinAwayMs: 5 * 60 * 1000, avoidBeforeEventMs: 3 * 60 * 1000, avoidAfterEventMs: 3 * 60 * 1000 };
+const BREAK_LEVELS = [
+  [ m => `sono ${m} minuti che lavori, stacca un po`, m => `stacca un po, la schiena ti ringrazia` ],
+  [ m => `${m} minuti e ancora non ti muovi, stacca un po`, m => `ti avevo detto di staccare un po` ],
+  [ m => `${m} minuti. complimenti, sei un eroe o un testone`, m => `il computer non scappa, tu invece ti stai fossilizzando` ],
+  [ m => `ok, io ti ho avvisato`, m => `fai come vuoi, sono ${m} minuti, ma poi non lamentarti` ]
+];
+const WELCOME_PHRASES = { paused: ["bravo, finalmente hai staccato", "così mi piaci, hai fatto la pausa"], short: ["ce l'hai fatta a staccare", "ben tornato"], mid: ["finalmente, ti aspettavo", "ti eri perso?"], long: ["dov'eri finito?", "ero quasi preoccupato"] };
+
+let workStart = Date.now(); let lastTick = Date.now(); let nextBreakAt = workStart + BREAK_CONFIG.firstAfterMs; let breakCount = 0; let idleDetectorOk = false; let idleSince = null; let welcomePending = null; let lastWelcomeAt = 0;
+
+function pickFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function resetWork() { workStart = Date.now(); nextBreakAt = workStart + BREAK_CONFIG.firstAfterMs; breakCount = 0; }
+function pickWelcome(mins, hadWarning) { if (hadWarning) return pickFrom(WELCOME_PHRASES.paused); if (mins < 15) return pickFrom(WELCOME_PHRASES.short); if (mins < 60) return pickFrom(WELCOME_PHRASES.mid); return pickFrom(WELCOME_PHRASES.long); }
+function registerAbsence(awayMs) { const hadWarning = breakCount > 0; resetWork(); if (awayMs < BREAK_CONFIG.welcomeMinAwayMs) return; const now = Date.now(); if (now - lastWelcomeAt < 60000) return; lastWelcomeAt = now; welcomePending = { text: pickWelcome(Math.round(awayMs / 60000), hadWarning), at: now }; }
+function nearScheduledEvent() { const now = Date.now(); const d = new Date(); for (const ev of SCHEDULED_EVENTS) { if (ev.active === false) continue; const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), ev.h, ev.m, 0).getTime(); const diff = t - now; if (diff < BREAK_CONFIG.avoidBeforeEventMs && diff > -BREAK_CONFIG.avoidAfterEventMs) return true; } return false; }
+function cannotSpeakReason() { if (!audioUnlocked) return 'audio not unlocked (tap once)'; if (document.hidden) return 'page hidden'; if (currentMood === 'talking') return 'already talking'; if (currentMood === 'sleeping') return 'sleeping'; if (nearScheduledEvent()) return 'near a scheduled event'; return ''; }
+function canSpeakNow() { return !cannotSpeakReason(); }
+
+async function startIdleDetection() { if (!('IdleDetector' in window) || idleDetectorOk) return; try { if (await IdleDetector.requestPermission() !== 'granted') return; const det = new IdleDetector(); det.addEventListener('change', () => { const away = det.userState === 'idle' || det.screenState === 'locked'; if (away && idleSince === null) { idleSince = Date.now() - (det.screenState === 'locked' ? 0 : BREAK_CONFIG.idleThresholdMs); } else if (!away && idleSince !== null) { const awayMs = Date.now() - idleSince; idleSince = null; registerAbsence(awayMs); } }); await det.start({ threshold: BREAK_CONFIG.idleThresholdMs }); idleDetectorOk = true; } catch (e) {} }
+function checkBreak() {
+  if (aiMode) return;
+  const now = Date.now();
+  if (now - lastTick > BREAK_CONFIG.gapResetMs) registerAbsence(now - lastTick);
+  lastTick = now;
+  if (welcomePending) { if (now - welcomePending.at > 2 * 60 * 1000) { welcomePending = null; } else if (canSpeakNow()) { const text = welcomePending.text; welcomePending = null; fireScheduledEvent({ text }); return; } }
+  if (idleSince !== null) return;
+  if (now < nextBreakAt || !canSpeakNow()) return;
+  const mins = Math.round((now - workStart) / 60000); const level = Math.min(breakCount, BREAK_LEVELS.length - 1); const phrase = pickFrom(BREAK_LEVELS[level])(mins);
+  breakCount++; nextBreakAt = now + BREAK_CONFIG.repeatEveryMs; fireScheduledEvent({ text: phrase });
+}
+setInterval(checkBreak, 15000);
+
+// ============================================================
+// MICROFONO
+// ============================================================
+const MIC_CONFIG = { calibrationMs: 2500, voiceRatio: 2.8, voiceMin: 0.007, listenAfterMs: 700, burstGapMs: 450, voiceReplyChance: 0.5, voiceReplyMinMs: 700, voiceReplyCooldownMs: 20000, speakVolume: 0.4, spikeRatio: 5, minLevel: 0.04, spikeMaxMs: 600, crestMin: 8, loudMult: 1.3, cooldownMs: 5000, speakChance: 0.35, silenceBoostAfterMs: 5 * 60 * 1000 };
+
+let micEnabled = false; let micStream = null, micSource = null, micAnalyser = null, micBuf = null;
+let micStarting = false, micAsked = false; let micStartedAt = 0, micFloor = 0;
+let lastMicReactAt = 0, lastSoundAt = Date.now(), silenceBoosted = false;
+let micDebug = false, micLevel = 0, micState = 'off';
+let burstStart = 0, burstLastLoud = 0, burstPeak = 0, micListenUntil = 0, micListening = false, lastVoiceReplyAt = 0;
+let micLastEvent = '—', micIgnore = ''; let burstMaxCrest = 0, micCrest = 0, micLastTickAt = Date.now();
+
+try {
+  const stored = localStorage.getItem('avatar_mic');
+  if (stored === '1') micEnabled = true; else micEnabled = false;
+} catch (e) { micEnabled = false; }
+
+async function startMic(force) {
+  if (aiMode) return; if (!micEnabled || micStream || micStarting) return; if (micAsked && !force) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { micState = 'not supported (need https or localhost)'; toast('🎙 mic not supported', true); return; }
+  micStarting = true; micState = 'requesting permission'; micAsked = true;
+  try {
+    initAudioContext(); if (!audioCtx) return; if (audioCtx.state === 'suspended') audioCtx.resume();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false } });
+    if (!micEnabled || aiMode) { stream.getTracks().forEach(t => t.stop()); return; }
+    micStream = stream; micSource = audioCtx.createMediaStreamSource(stream); micAnalyser = audioCtx.createAnalyser();
+    micAnalyser.fftSize = 1024; micBuf = new Float32Array(micAnalyser.fftSize); micSource.connect(micAnalyser);
+    micStartedAt = Date.now(); micFloor = 0; lastSoundAt = Date.now(); stream.getAudioTracks()[0].addEventListener('ended', stopMic);
+    micState = 'active';
+  } catch (e) { micState = 'error: ' + (e && e.name ? e.name : 'unknown'); toast('🎙 mic unavailable (' + (e && e.name ? e.name : '?') + ')', true); } finally { micStarting = false; }
+}
+function stopMic() { micState = 'off'; if (micStream) micStream.getTracks().forEach(t => t.stop()); if (micSource) { try { micSource.disconnect(); } catch (e) {} } micStream = null; micSource = null; micAnalyser = null; micBuf = null; }
+function micSpeak(text) { enterState('talking', 0); speakText(text, MIC_CONFIG.speakVolume, () => { setTimeout(() => { if (currentMood === 'talking') enterState('awake', 0); }, 400); }); setTimeout(() => { if (currentMood === 'talking') { stopSpeaking(); enterState('awake', 0); } }, 6000); }
+function micReact() { const now = Date.now(); if (now - lastMicReactAt < MIC_CONFIG.cooldownMs) { micLastEvent += ' → cooldown'; return; } lastMicReactAt = now; if (currentMood === 'sleeping') wakeFromMicrosleep(); forcedBlinkQueue = Math.max(forcedBlinkQueue, 1); if (Math.random() < MIC_CONFIG.speakChance && canSpeakNow()) micSpeak(pickFrom(MIC_PHRASES)); activeEmotion = 'sorpreso'; emotionHoldFrames = 120; }
+function endBurst(now, spikeThr) {
+  const dur = Math.round(burstLastLoud - burstStart); const peak = burstPeak; const crest = burstMaxCrest;
+  burstStart = 0; burstPeak = 0; burstMaxCrest = 0;
+  const info = dur + 'ms peak ' + peak.toFixed(3) + ' crest ' + crest.toFixed(1);
+  if (dur < MIC_CONFIG.spikeMaxMs && peak > spikeThr && (crest >= MIC_CONFIG.crestMin || peak > spikeThr * MIC_CONFIG.loudMult)) { micLastEvent = 'spike ' + info; micReact(); return; }
+  if (dur >= MIC_CONFIG.listenAfterMs && dur < 45000) {
+    micLastEvent = 'voice ' + info; micListenUntil = now + 1500; if (currentMood === 'sleeping') wakeFromMicrosleep();
+    if (dur >= MIC_CONFIG.voiceReplyMinMs) {
+      const sinceReply = now - lastVoiceReplyAt; let why = '';
+      if (sinceReply <= MIC_CONFIG.voiceReplyCooldownMs) why = 'cooldown ' + Math.ceil((MIC_CONFIG.voiceReplyCooldownMs - sinceReply) / 1000) + 's';
+      else if (Math.random() >= MIC_CONFIG.voiceReplyChance) why = 'not selected (probability)';
+      else why = cannotSpeakReason();
+      if (why) micLastEvent += ' → no reply: ' + why;
+      else { lastVoiceReplyAt = now; micSpeak(pickFrom(VOICE_REPLIES)); micLastEvent += ' → replies'; }
+    }
+    return;
+  }
+  micLastEvent = 'ignored: ' + info;
+}
+function micTick() {
+  if (!micAnalyser) return; if (aiMode) return; if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  micAnalyser.getFloatTimeDomainData(micBuf);
+  let sum = 0, peak = 0;
+  for (let i = 0; i < micBuf.length; i++) { const v = micBuf[i]; sum += v * v; const a = v < 0 ? -v : v; if (a > peak) peak = a; }
+  const rmsRaw = Math.sqrt(sum / micBuf.length); micCrest = rmsRaw > 0.0005 ? peak / rmsRaw : 0;
+  const rms = Math.max(rmsRaw, peak * 0.4); micLevel = rms;
+  const now = Date.now(); const dt = Math.min(200, now - micLastTickAt); micLastTickAt = now;
+  if (now - micStartedAt < MIC_CONFIG.calibrationMs) { micFloor = micFloor === 0 ? rms : lerp(micFloor, rms, Math.min(1, dt / 400)); return; }
+  const reason = (isSpeaking || currentMood === 'talking') ? 'talking' : currentMood === 'greeting' ? 'greeting (5s after tap)' : yawnActive > 0 ? 'yawn' : (now - lastSpeechEnd < 1000) ? 'echo of own voice' : '';
+  if (reason) { micIgnore = reason; burstStart = 0; burstPeak = 0; micListening = false; return; }
+  micIgnore = '';
+  const voiceThr = Math.max(micFloor * MIC_CONFIG.voiceRatio, MIC_CONFIG.voiceMin); const spikeThr = Math.max(micFloor * MIC_CONFIG.spikeRatio, MIC_CONFIG.minLevel);
+  if (rms < micFloor) micFloor += (rms - micFloor) * Math.min(1, dt / 1200); else if (!burstStart || now - burstStart > 20000) micFloor += (rms - micFloor) * Math.min(1, dt / 20000);
+  if (rms > voiceThr) { if (!burstStart) { burstStart = now; burstPeak = 0; burstMaxCrest = 0; } burstLastLoud = now; if (rms > burstPeak) burstPeak = rms; if (micCrest > burstMaxCrest) burstMaxCrest = micCrest; lastSoundAt = now; silenceBoosted = false; }
+  else if (burstStart && now - burstLastLoud > MIC_CONFIG.burstGapMs) { endBurst(now, spikeThr); }
+  micListening = (burstStart > 0 && now - burstStart >= MIC_CONFIG.listenAfterMs && now - burstStart < 45000) || now < micListenUntil;
+  if (!silenceBoosted && now - lastSoundAt > MIC_CONFIG.silenceBoostAfterMs) { silenceBoosted = true; nextYawnAt = Math.min(nextYawnAt, now + rand(20000, 60000)); nextMicrosleepAt = Math.min(nextMicrosleepAt, now + rand(60000, 180000)); }
+}
+setInterval(micTick, 15);
+
+function drawMicDebug() {
+  if (!micDebug) return;
+  const x = 39, y = LH - 130; const voiceThr = Math.max(micFloor * MIC_CONFIG.voiceRatio, MIC_CONFIG.voiceMin); const spikeThr = Math.max(micFloor * MIC_CONFIG.spikeRatio, MIC_CONFIG.minLevel);
+  ctx.save(); ctx.shadowBlur = 0; ctx.font = '10px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(0,255,157,0.9)';
+  ctx.fillText('MIC: ' + micState + ' | ctx: ' + (audioCtx ? audioCtx.state : 'n/a') + (micListening ? ' | LISTENING' : '') + (aiMode ? ' | AI' : ''), x, y);
+  ctx.fillText('lvl ' + micLevel.toFixed(3) + '  floor ' + micFloor.toFixed(3) + '  crest ' + micCrest.toFixed(1), x, y + 14);
+  ctx.fillText('voice ' + voiceThr.toFixed(3) + '  spike ' + spikeThr.toFixed(3), x, y + 26);
+  ctx.fillText('event: ' + micLastEvent, x, y + 38);
+  if (micIgnore) { ctx.fillStyle = '#ffaa44'; ctx.fillText('ignore: ' + micIgnore, x, y + 50); ctx.fillStyle = 'rgba(0,255,157,0.9)'; }
+  const W = 180, H = 6, scale = W / Math.max(spikeThr * 2, 0.05);
+  ctx.strokeStyle = 'rgba(0,255,157,0.6)'; ctx.lineWidth = 1;
+  ctx.strokeRect(x, y + 58, W, H); ctx.fillRect(x, y + 58, Math.min(W, micLevel * scale), H);
+  ctx.fillStyle = '#ffcc44'; ctx.fillRect(x + Math.min(W, voiceThr * scale), y + 55, 2, H + 6);
+  ctx.fillStyle = '#ff6644'; ctx.fillRect(x + Math.min(W, spikeThr * scale), y + 55, 2, H + 6);
+  ctx.restore();
+}
+
+// ============================================================
+// MODALITÀ AI (Gemini + Groq)
+// ============================================================
+let aiContext = ''; let aiContextLoaded = false; let aiHistory = [];
+
+async function loadAiContext() {
+  if (aiContextLoaded) return;
+  try {
+    const src = customAiContext !== null ? customAiContext : await loadReadFile();
+    if (typeof src === 'string') aiContext = src;
+    else if (Array.isArray(src)) aiContext = src.map(String).join('\n\n');
+    else aiContext = '';
+    aiContextLoaded = true;
+  } catch (e) { aiContext = ''; aiContextLoaded = true; }
+}
+
+async function askAI(userText) {
+  if (aiProcessing) return;
+  if (!PROXY_BASE_URL || PROXY_BASE_URL.includes('IL_TUO_INDIRIZZO')) { toast('🔑 configure proxy URL', true); return; }
+
+  aiProcessing = true; enterState('talking', 0); showSubtitle('…');
+  aiHistory.push({ role: 'user', parts: [{ text: userText }] });
+
+  let systemText;
+  if (aiWithContext && aiContext) {
+    systemText = `Sei un assistente che risponde a domande basandosi esclusivamente sul materiale fornito qui sotto.
+REGOLE: Tono neutro, chiaro e professionale. Rispondi solo in base al materiale.
+--- INIZIO MATERIALE ---
+${aiContext}
+--- FINE MATERIALE ---`;
+  } else { systemText = GEMINI_SYSTEM_PROMPT; }
+
+  try {
+    let reply = '';
+    
+    if (aiProvider === 'groq') {
+      // Formato per Groq
+      const url = `${PROXY_BASE_URL}/groq/openai/v1/chat/completions`;
+      const messages = [
+        { role: 'system', content: systemText },
+        ...aiHistory.map(msg => ({ role: msg.role === 'model' ? 'assistant' : 'user', content: msg.parts[0].text }))
+      ];
+      const response = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: GROQ_MODEL, messages: messages, temperature: 0.7, max_tokens: 300 })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
+      reply = data.choices[0].message.content;
+      
+    } else {
+      // Formato per Gemini
+      const url = `${PROXY_BASE_URL}/gemini/v1beta/models/${GEMINI_MODEL}:generateContent`;
+      const response = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents: aiHistory, generationConfig: { temperature: 0.7, maxOutputTokens: 300 } })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || 'Gemini API error');
+      reply = data.candidates[0].content.parts[0].text;
+    }
+
+    aiHistory.push({ role: 'model', parts: [{ text: reply }] });
+    aiProcessing = false;
+    speakText(reply, 0.9, () => {
+      setTimeout(() => { if (aiMode) enterState('awake', 0); }, 500);
+    });
+    
+  } catch (err) {
+    aiProcessing = false; aiHistory.pop(); console.error('AI Error:', err);
+    showSubtitle('⚠ ' + err.message); hideSubtitle(3000); toast('⚠ ' + err.message, true);
+    setTimeout(() => { if (aiMode) enterState('awake', 0); }, 2000);
+  }
+}
+
+async function enterAiMode(withContext) {
+  if (aiMode) exitAiMode(true);
+  aiMode = true; aiWithContext = !!withContext; 
+  stopSpeaking(); stopMic();
+  enterState('awake', 0); document.body.classList.add('ai-mode'); aiHistory = [];
+
+  if (aiWithContext) {
+    toast('📖 loading context…'); await loadAiContext();
+    if (aiContext) { toast('📖 context loaded'); }
+    else { aiWithContext = false; toast('📖 context not found, no-context mode', true); }
+  }
+  openAiTextInput();
+}
+
+function exitAiMode(silent) {
+  aiMode = false; aiWithContext = false; stopSpeaking(); aiTextInputOpen = false; closeAiTextInput(); aiHistory = [];
+  document.body.classList.remove('ai-mode');
+  if (micEnabled) startMic(false);
+  if (!silent) toast('🤖 AI mode off');
+}
+
+function openAiTextInput() {
+  if (aiTextInputOpen) return;
+  aiTextInputOpen = true;
+  const wrap = document.createElement('div');
+  wrap.id = 'ai-input-wrap';
+  wrap.style.cssText = `position: fixed; left: 50%; bottom: 20vh; transform: translateX(-50%); z-index: 20; width: min(80vw, 700px); display: flex; gap: 8px; background: rgba(0,15,9,0.9); border: 1px solid rgba(0,255,157,0.5); border-radius: 10px; padding: 10px; box-shadow: 0 0 30px rgba(0,255,157,0.25);`;
+  const input = document.createElement('input');
+  input.type = 'text';
+  // Placeholder neutro
+  input.placeholder = 'Type a message… (Enter to send, Esc to close)';
+  input.style.cssText = `flex: 1; background: rgba(0,0,0,0.5); color: #00ff88; border: 1px solid rgba(0,255,157,0.3); border-radius: 6px; padding: 10px 12px; font-family: inherit; font-size: 15px; outline: none;`;
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && input.value.trim()) { const t = input.value.trim(); input.value = ''; closeAiTextInput(); askAI(t); }
+    else if (e.key === 'Escape') { e.stopPropagation(); closeAiTextInput(); }
+  });
+  wrap.appendChild(input); document.body.appendChild(wrap); input.focus();
+}
+
+function closeAiTextInput() { aiTextInputOpen = false; const el = document.getElementById('ai-input-wrap'); if (el) el.remove(); }
+
+// ============================================================
+// MENU & INTERFACCIA
+// ============================================================
+function toggleProvider() {
+  aiProvider = aiProvider === 'gemini' ? 'groq' : 'gemini';
+  providerLabel.textContent = aiProvider === 'gemini' ? 'Switch to Groq' : 'Switch to Gemini';
+  hkProvider.classList.toggle('active', aiProvider === 'groq');
+  toast('🤖 AI switched to ' + aiProvider.toUpperCase());
+  updateHotkeyMenu();
+}
+
+function updateHotkeyMenu() { 
+  hkMicDebug.classList.toggle('active', micDebug);
+  hkProvider.classList.toggle('active', aiProvider === 'groq');
+  providerLabel.textContent = aiProvider === 'gemini' ? 'Switch to Groq' : 'Switch to Gemini';
+}
+function openHotkeyMenu() { hotkeyMenuOpen = true; updateHotkeyMenu(); hotkeyMenuEl.classList.add('show'); }
+function closeHotkeyMenu() { hotkeyMenuOpen = false; hotkeyMenuEl.classList.remove('show'); }
+
+// ============================================================
+// GESTIONE IMPORTAZIONE FILE
+// ============================================================
+contextFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    let extracted = text;
+    if (/\.m?js$/i.test(file.name)) {
+      try {
+        const fake = {};
+        new Function('window', text)(fake);
+        if (typeof fake.AUDIO_SOURGE === 'string') extracted = fake.AUDIO_SOURGE;
+        else if (Array.isArray(fake.AUDIO_SOURGE)) extracted = fake.AUDIO_SOURGE.join('\n\n');
+      } catch (err) { /* usa testo grezzo */ }
+    }
+    customAiContext = extracted;
+    importedFileName = basename(file.name);
+    aiContext = ''; aiContextLoaded = false; aiHistory = [];
+    toast('📄 context imported: ' + importedFileName);
+    contextFileInput.value = '';
+    closeHotkeyMenu();
+  } catch (err) { toast('⚠ ' + err.message, true); }
+});
+
+// ============================================================
+// TASTI (Desktop)
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.key === 'a' || e.key === 'A') { e.preventDefault(); if (aiMode && aiWithContext) exitAiMode(); else enterAiMode(true); }
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.key === 't' || e.key === 'T') { e.preventDefault(); if (aiMode && !aiWithContext) exitAiMode(); else enterAiMode(false); }
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.key === 'g' || e.key === 'G') { e.preventDefault(); toggleProvider(); }
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.key !== 'Backspace' && e.key !== 'ArrowLeft') return;
+  e.preventDefault();
+  if (!aiMode) { enterAiMode(false); return; }
+  if (aiTextInputOpen) closeAiTextInput(); else openAiTextInput();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return; if (isTypingInField()) return;
+  if (hotkeyMenuOpen) { closeHotkeyMenu(); return; } openHotkeyMenu();
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return; if ((e.key !== 'l' && e.key !== 'L') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (readActive) stopReading(); else startReading();
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return; if ((e.key !== 'm' && e.key !== 'M') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  muted = !muted; if (muted) { stopSpeaking(); toast('🔇 muted'); } else { toast('🔊 audio on'); }
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return; if ((e.key !== 's' && e.key !== 'S') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  subtitlesOn = !subtitlesOn; if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+  toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return; if ((e.key !== 'd' && e.key !== 'D') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return; micDebug = !micDebug; updateHotkeyMenu();
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return; if ((e.key !== 'n' && e.key !== 'N') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  micEnabled = !micEnabled; if (micEnabled) { micAsked = false; startMic(true); toast('🎙 mic on'); } else { stopMic(); toast('🎙 mic off'); }
+});
+
+hkMicDebug.addEventListener('click', (e) => { e.stopPropagation(); micDebug = !micDebug; updateHotkeyMenu(); closeHotkeyMenu(); });
+hkProvider.addEventListener('click', (e) => { e.stopPropagation(); toggleProvider(); closeHotkeyMenu(); });
+document.body.addEventListener('click', (e) => { if (hotkeyMenuOpen && !e.target.closest('#hotkey-menu')) closeHotkeyMenu(); });
+
+// ============================================================
+// STARTUP
+// ============================================================
+try { localStorage.removeItem('avatar_muted'); } catch (e) {}
+muted = false;
+
+enterState('awake', 0);
+setInterval(checkScheduledEvents, 5000); checkScheduledEvents();
+
+function renderLoop() { drawAvatar(); requestAnimationFrame(renderLoop); }
+renderLoop();
+</script>
+</body>
+</html>

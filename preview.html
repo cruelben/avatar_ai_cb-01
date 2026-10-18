@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CB-01 — 15 Varianti Organiche Showroom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color: transparent; }
+  html, body { height:100%; overflow:hidden; font-family: 'Quicksand', sans-serif; transition: background-color 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+  canvas { display:block; position:fixed; inset:0; width:100vw; height:100vh; cursor:crosshair; z-index:1; }
+
+  /* Selettore Varianti Inferiore */
+  #switcher {
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+    display:flex; gap:6px; padding:8px 12px; z-index:100;
+    background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius:24px; flex-wrap:wrap; justify-content:center;
+    max-width:96vw; max-height:22vh; overflow-y:auto; box-shadow:0 12px 32px rgba(0,0,0,0.15);
+  }
+  #switcher::-webkit-scrollbar { width:4px; }
+  #switcher::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.4); border-radius:4px; }
+  
+  #switcher button {
+    font-size:11px; letter-spacing:0.2px; font-weight:700; font-family:'Fredoka', sans-serif;
+    padding:6px 12px; border-radius:14px; border:1px solid rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.2); color:#334155; cursor:pointer;
+    transition:all .25s cubic-bezier(0.34, 1.56, 0.64, 1); white-space:nowrap;
+    display:flex; align-items:center; gap:4px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  #switcher button:hover { background:rgba(255,255,255,0.45); color:#0f172a; transform:translateY(-2px) scale(1.02); }
+  #switcher button.active {
+    background:#ffffff; color:#0f172a; border-color:#ffffff;
+    box-shadow: 0 6px 18px rgba(255,255,255,0.6), 0 2px 8px rgba(0,0,0,0.1);
+    transform:scale(1.05);
+  }
+
+  /* Pannello simulazione stato superiore */
+  #controls {
+    position:fixed; top:16px; left:50%; transform:translateX(-50%);
+    display:flex; gap:8px; padding:8px 14px; z-index:100;
+    background:rgba(255, 255, 255, 0.15); backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border: 1.5px solid rgba(255,255,255,0.25); border-radius:18px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.1);
+  }
+  .ctrl-btn {
+    font-size:11px; font-weight:700; font-family:'Fredoka', sans-serif;
+    padding:7px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.3);
+    background:rgba(255,255,255,0.25); color:#334155; cursor:pointer; transition:all 0.25s ease;
+  }
+  .ctrl-btn:hover { background:rgba(255,255,255,0.5); }
+  .ctrl-btn.active {
+    background:#0f172a; color:#ffffff; border-color:#0f172a;
+    box-shadow:0 4px 12px rgba(15,23,42,0.25);
+  }
+</style>
+</head>
+<body class="bg-[#f7ecd6]">
+
+<canvas id="c"></canvas>
+
+<!-- Pannello Simulazione Stati -->
+<div id="controls">
+  <button class="ctrl-btn" id="btnTalk" onclick="toggleState('talk')">🗣️ Parlato</button>
+  <button class="ctrl-btn" id="btnBlink" onclick="triggerBlink()">👁️ Ammicca</button>
+  <button class="ctrl-btn" id="btnPulse" onclick="toggleState('fastBreath')">🫁 Respiro Profondo</button>
+</div>
+
+<!-- Selettore Varianti Inferiore -->
+<div id="switcher"></div>
+
+<script>
+// ============================================================
+// REGISTRO 15 VARIANTI ORGANICHE E BIOLOGICHE
+// ============================================================
+const VARIANTS = {
+  ameba: { label: '◐ Ameba', cat: 'Micro Organismo', bg: '#f7ecd6', uiBg: '#ff9a76', primary: '#ff9a76', secondary: '#ffd580', accent: '#e07a5f', eye: '#3a1a10', mouth: '#6b2c1a', particleColor: 'rgba(230, 130, 100, ', particleType: 'bubble', darkUi: true, font: '"Quicksand", sans-serif' },
+  medusa: { label: '◑ Medusa', cat: 'Abissale Bioluminescente', bg: '#071828', uiBg: '#7de0e8', primary: '#7de0e8', secondary: '#ffb4d1', accent: '#b47fe8', eye: '#ffffff', mouth: '#7de0e8', particleColor: 'rgba(125, 224, 232, ', particleType: 'float', darkUi: false, font: '"Nunito", sans-serif' },
+  pelosetto: { label: '◒ Pelosetto', cat: 'Creatura Soffice', bg: '#fbf3eb', uiBg: '#d97706', primary: '#d97706', secondary: '#fef3c7', accent: '#b45309', eye: '#271c19', mouth: '#78350f', particleColor: 'rgba(217, 119, 6, ', particleType: 'float', darkUi: true, font: '"Fredoka", sans-serif' },
+  spora: { label: '🍄 Spora', cat: 'Funghetto Bio', bg: '#1b1528', uiBg: '#c084fc', primary: '#a855f7', secondary: '#f472b6', accent: '#e9d5ff', capColor: '#7e22ce', stemColor: '#f3e8ff', eye: '#2e1065', mouth: '#581c87', particleColor: 'rgba(216, 180, 254, ', particleType: 'spore', darkUi: false, font: '"Fredoka", sans-serif' },
+  polpetto: { label: '🐙 Polpetto', cat: 'Mollusco Pastello', bg: '#fdf2f8', uiBg: '#f472b6', primary: '#f472b6', secondary: '#fbcfe8', accent: '#fb7185', eye: '#1e1b4b', mouth: '#9f1239', particleColor: 'rgba(244, 114, 182, ', particleType: 'bubble', darkUi: true, font: '"Fredoka", sans-serif' },
+  germoglio: { label: '🌱 Germoglio', cat: 'Spirito Linfa', bg: '#062319', uiBg: '#34d399', primary: '#34d399', secondary: '#a7f3d0', accent: '#059669', eye: '#ffffff', mouth: '#34d399', particleColor: 'rgba(52, 211, 153, ', particleType: 'firefly', darkUi: false, font: '"Quicksand", sans-serif' },
+  lucciola: { label: '✨ Lucciola', cat: 'Sfera Eterea', bg: '#0c0a1d', uiBg: '#fde047', primary: '#fde047', secondary: '#fef08a', accent: '#eab308', eye: '#422006', mouth: '#854d0e', particleColor: 'rgba(253, 224, 71, ', particleType: 'firefly', darkUi: false, font: '"Quicksand", sans-serif' },
+  stella: { label: '⭐ Stella', cat: 'Marina Gommosa', bg: '#fff7ed', uiBg: '#f97316', primary: '#f97316', secondary: '#ffedd5', accent: '#ea580c', eye: '#292524', mouth: '#9a3412', particleColor: 'rgba(249, 115, 22, ', particleType: 'bubble', darkUi: true, font: '"Fredoka", sans-serif' },
+  vortice: { label: '🌀 Vortice', cat: 'Plasma Cosmico', bg: '#090514', uiBg: '#a855f7', primary: '#a855f7', secondary: '#06b6d4', accent: '#e879f9', eye: '#ffffff', mouth: '#38bdf8', particleColor: 'rgba(168, 85, 247, ', particleType: 'vortex', darkUi: false, font: '"Nunito", sans-serif' },
+  nuvola: { label: '☁️ Nuvola', cat: 'Vapore Soffice', bg: '#eff6ff', uiBg: '#60a5fa', primary: '#93c5fd', secondary: '#ffffff', accent: '#3b82f6', eye: '#1e3a8a', mouth: '#1d4ed8', particleColor: 'rgba(147, 197, 253, ', particleType: 'drop', darkUi: true, font: '"Fredoka", sans-serif' },
+  axolotl: { label: '🦎 Axolotl', cat: 'Anfibio Rosa', bg: '#fff0f5', uiBg: '#f472b6', primary: '#fbcfe8', secondary: '#f472b6', accent: '#e11d48', eye: '#1e1b4b', mouth: '#be123c', particleColor: 'rgba(244, 114, 182, ', particleType: 'bubble', darkUi: true, font: '"Fredoka", sans-serif' },
+  goccia: { label: '💧 Goccia', cat: 'Acqua Cristallina', bg: '#031b2e', uiBg: '#38bdf8', primary: '#38bdf8', secondary: '#bae6fd', accent: '#0284c7', eye: '#ffffff', mouth: '#38bdf8', particleColor: 'rgba(56, 189, 248, ', particleType: 'drop', darkUi: false, font: '"Quicksand", sans-serif' },
+  lava: { label: '🔥 Lava Blob', cat: 'Magma Caldo', bg: '#1a0505', uiBg: '#f97316', primary: '#ef4444', secondary: '#facc15', accent: '#b91c1c', eye: '#fef08a', mouth: '#f97316', particleColor: 'rgba(239, 68, 68, ', particleType: 'spore', darkUi: false, font: '"Nunito", sans-serif' },
+  cristallo: { label: '💎 Cristallo', cat: 'Gemma Organica', bg: '#0f172a', uiBg: '#2dd4bf', primary: '#2dd4bf', secondary: '#99f6e4', accent: '#0f766e', eye: '#ffffff', mouth: '#2dd4bf', particleColor: 'rgba(45, 212, 191, ', particleType: 'float', darkUi: false, font: '"Quicksand", sans-serif' },
+  camaleonte: { label: '🎨 Camaleonte', cat: 'Blob Cangiante', bg: '#f0fdf4', uiBg: '#10b981', primary: '#34d399', secondary: '#fbbf24', accent: '#f472b6', eye: '#064e3b', mouth: '#047857', particleColor: 'rgba(52, 211, 153, ', particleType: 'firefly', darkUi: true, font: '"Fredoka", sans-serif' }
+};
+
+// ============================================================
+// CANVAS SETUP & RESIZING
+// ============================================================
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const switcher = document.getElementById('switcher');
+
+let currentKey = 'ameba';
+const ZOOM = 1.35;
+let LW = 420, LH = 420;
+
+function fitCanvas() {
+  const w = window.innerWidth, h = window.innerHeight;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const S = (Math.min(w, h) / 420) * ZOOM;
+  LW = w / S; LH = h / S;
+  ctx.setTransform(dpr * S, 0, 0, dpr * S, 0, 0);
+}
+window.addEventListener('resize', fitCanvas);
+fitCanvas();
+
+function setVariant(key) {
+  currentKey = key;
+  const v = VARIANTS[key];
+  document.body.style.backgroundColor = v.bg;
+  
+  const ctrlBtns = document.querySelectorAll('.ctrl-btn');
+  ctrlBtns.forEach(btn => {
+    btn.style.color = v.darkUi ? '#334155' : '#e2e8f0';
+    btn.style.borderColor = v.darkUi ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.25)';
+    btn.style.background = v.darkUi ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)';
+  });
+
+  switcher.querySelectorAll('button').forEach(b =>
+    b.classList.toggle('active', b.dataset.key === key));
+}
+
+// ============================================================
+// STATO SIMULAZIONE & PARTICELLE
+// ============================================================
+let time = 0;
+let breathPhase = 0;
+let eyeBlink = 0;
+let blinkPhase = 'idle', blinkTimer = 0, nextBlinkAt = 160;
+let mouthOpen = 0;
+let eyeTargetX = 0, eyeTargetY = 0;
+let eyeCurrentX = 0, eyeCurrentY = 0;
+let hoveredButtonId = null;
+
+let simStates = { talk: false, fastBreath: false };
+let activeStates = { A:false, T:false, L:false, S:false, M:false, N:false, IMPORT:false };
+
+function toggleState(st) {
+  simStates[st] = !simStates[st];
+  document.getElementById(st === 'talk' ? 'btnTalk' : 'btnPulse').classList.toggle('active', simStates[st]);
+}
+function triggerBlink() {
+  if (blinkPhase === 'idle') { blinkPhase = 'closing'; blinkTimer = 0; }
+}
+
+let particles = [];
+class Particle {
+  constructor() { this.reset(true); }
+  reset(init) {
+    this.x = Math.random() * LW;
+    this.y = init ? Math.random() * LH : LH + 20;
+    this.size = Math.random() * 3 + 1;
+    this.speed = Math.random() * 0.6 + 0.2;
+    this.alpha = Math.random() * 0.6 + 0.2;
+    this.wobble = Math.random() * Math.PI * 2;
+    this.angle = Math.random() * Math.PI * 2;
+  }
+  update(v) {
+    this.wobble += 0.03;
+    if (v.particleType === 'vortex') {
+      this.angle += 0.02;
+      const radius = 110 + Math.sin(this.wobble) * 20;
+      this.x = LW / 2 + Math.cos(this.angle) * radius;
+      this.y = LH / 2 + Math.sin(this.angle) * radius;
+    } else if (v.particleType === 'drop') {
+      this.y += this.speed * 1.5;
+      if (this.y > LH + 20) this.y = -20;
+    } else {
+      this.y -= this.speed;
+      this.x += Math.sin(this.wobble) * 0.5;
+      if (this.y < -20) this.reset();
+    }
+  }
+  draw(v) {
+    ctx.save();
+    ctx.fillStyle = v.particleColor + this.alpha + ')';
+    ctx.beginPath();
+    if (v.particleType === 'spore') {
+      ctx.arc(this.x, this.y, this.size * 0.8, 0, Math.PI * 2);
+    } else if (v.particleType === 'firefly' || v.particleType === 'vortex') {
+      ctx.shadowBlur = 8; ctx.shadowColor = v.primary;
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    } else {
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    ctx.restore();
+  }
+}
+for (let i = 0; i < 45; i++) particles.push(new Particle());
+
+// ============================================================
+// PATH UTILITIES PER FORME ORGANICHE
+// ============================================================
+function blobPath(cx, cy, rx, ry, wobble, seed) {
+  const points = 48;
+  ctx.beginPath();
+  for (let i = 0; i <= points; i++) {
+    const a = (i / points) * Math.PI * 2;
+    const n1 = Math.sin(a * 3 + time * 1.2 + seed) * wobble;
+    const n2 = Math.sin(a * 5 - time * 0.9 + seed * 2) * (wobble * 0.5);
+    const r = 1 + n1 + n2;
+    const x = cx + Math.cos(a) * rx * r;
+    const y = cy + Math.sin(a) * ry * r;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+// ============================================================
+// CALCOLO LAYOUT BOTTONI CANVAS UI
+// ============================================================
+const BTN_LAYOUT = {
+  marginX: 28, marginY: 30, buttonW: 52, buttonH: 48,
+  gapY: 16, importWidth: 124, importHeight: 28
+};
+
+function computeButtons() {
+  const L = BTN_LAYOUT;
+  const list = [];
+  const colHeight = L.buttonH * 3 + L.gapY * 2;
+  const colTop = (LH - colHeight) / 2 + 10;
+  
+  ['A','T','L'].forEach((id, i) => list.push({
+    id, x: L.marginX, y: colTop + i * (L.buttonH + L.gapY),
+    w: L.buttonW, h: L.buttonH,
+    label: { A:'context', T:'chat', L:'leggi' }[id]
+  }));
+  
+  const xR = LW - L.marginX - L.buttonW;
+  ['S','M','N'].forEach((id, i) => list.push({
+    id, x: xR, y: colTop + i * (L.buttonH + L.gapY),
+    w: L.buttonW, h: L.buttonH,
+    label: { S:'subtitles', M:'mute', N:'listen' }[id]
+  }));
+  
+  list.push({
+    id: 'IMPORT', label: '📎 contesto',
+    x: LW - L.marginX - L.importWidth, y: L.marginY,
+    w: L.importWidth, h: L.importHeight
+  });
+  return list;
+}
+
+function hitTest(px, py) {
+  for (const b of computeButtons()) {
+    if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) return b.id;
+  }
+  return null;
+}
+
+// ============================================================
+// RENDER BOTTONI ORGANICI (BOLLA / GOCCIA)
+// ============================================================
+function drawButtons(v) {
+  const btns = computeButtons();
+  btns.forEach(b => {
+    const active = activeStates[b.id];
+    const hover = hoveredButtonId === b.id;
+    const isImport = b.id === 'IMPORT';
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+
+    ctx.save();
+
+    const scale = active ? 1.08 : (hover ? 1.04 : 1.0);
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+
+    ctx.shadowBlur = active ? 16 : (hover ? 10 : 4);
+    ctx.shadowColor = v.primary;
+    
+    ctx.fillStyle = active ? v.primary : (hover ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.55)');
+    ctx.strokeStyle = active ? v.accent : 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 2;
+
+    const r = isImport ? 14 : 22;
+    ctx.beginPath();
+    ctx.roundRect(b.x, b.y, b.w, b.h, r);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(cx, b.y + 7, b.w * 0.3, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = active ? (v.darkUi ? '#ffffff' : '#071828') : (v.darkUi ? '#1e293b' : '#0f172a');
+    ctx.font = `700 ${isImport ? 12 : 17}px ${v.font}`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(isImport ? b.label : b.id, cx, cy + 1);
+
+    ctx.restore();
+
+    if (!isImport) {
+      ctx.save();
+      ctx.font = `700 10px ${v.font}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = v.darkUi ? 'rgba(30, 41, 59, 0.7)' : 'rgba(226, 232, 240, 0.8)';
+      ctx.fillText(b.label, cx, b.y + b.h + 4);
+      ctx.restore();
+    }
+  });
+}
+
+// ============================================================
+// RENDERING AVATAR BIOLOGICI (LE 15 VARIANTI)
+// ============================================================
+function drawAvatar(v) {
+  const cx = LW / 2, cy = LH / 2 - 10;
+  const breathMult = simStates.fastBreath ? 2.5 : 1.0;
+  const breath = Math.sin(breathPhase * breathMult) * 0.5 + 0.5;
+  const pulseScale = 1 + breath * 0.06;
+  const openMouth = mouthOpen + (simStates.talk ? Math.abs(Math.sin(time * 12)) * 0.45 : 0);
+
+  // Helper Occhi Generici
+  const drawEyes = (ex1, ey1, ex2, ey2, eyeRad, isDark) => {
+    const r = eyeRad * (1 - eyeBlink);
+    if (r <= 1) return;
+    ctx.fillStyle = v.eye;
+    ctx.beginPath(); ctx.arc(ex1 + eyeCurrentX, ey1 + eyeCurrentY, r, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex2 + eyeCurrentX, ey2 + eyeCurrentY, r, 0, Math.PI * 2); ctx.fill();
+    
+    ctx.fillStyle = isDark ? '#ffffff' : v.secondary;
+    ctx.beginPath(); ctx.arc(ex1 - r*0.3 + eyeCurrentX, ey1 - r*0.3 + eyeCurrentY, r*0.3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex2 - r*0.3 + eyeCurrentX, ey2 - r*0.3 + eyeCurrentY, r*0.3, 0, Math.PI * 2); ctx.fill();
+  };
+
+  // Helper Bocca Generica
+  const drawMouth = (mx, my, mw) => {
+    ctx.strokeStyle = v.mouth; ctx.lineWidth = 3.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    if (openMouth > 0.05) {
+      ctx.fillStyle = v.mouth;
+      ctx.ellipse(mx, my + 3, mw * 0.8, openMouth * 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.arc(mx, my, mw, 0.1, Math.PI - 0.1);
+      ctx.stroke();
+    }
+  };
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // 1. AMEBA
+  if (currentKey === 'ameba') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 30; ctx.shadowColor = v.primary;
+    blobPath(0, 0, 110 * pulseScale, 115 * pulseScale, 0.07, 1); ctx.fill();
+    ctx.fillStyle = v.secondary; ctx.beginPath();
+    blobPath(10, 10, 45 * pulseScale, 45 * pulseScale, 0.05, 3); ctx.fill();
+    drawEyes(-30, -10, 30, -10, 14, true); drawMouth(0, 22, 12);
+  }
+  // 2. MEDUSA
+  else if (currentKey === 'medusa') {
+    ctx.strokeStyle = v.accent; ctx.lineWidth = 2.5;
+    for (let i = -3; i <= 3; i++) {
+      ctx.beginPath(); ctx.moveTo(i * 22, 35);
+      const wave = Math.sin(time * 3 + i) * 18;
+      ctx.bezierCurveTo(i * 20 + wave, 70, i * 25 - wave, 110, i * 28 + wave * 0.5, 145); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(125, 224, 232, 0.25)'; ctx.strokeStyle = v.primary; ctx.lineWidth = 2.5; ctx.shadowBlur = 30; ctx.shadowColor = v.primary;
+    ctx.beginPath(); ctx.arc(0, 0, 92 * pulseScale, Math.PI, 0); ctx.quadraticCurveTo(0, 45, -92 * pulseScale, 0); ctx.fill(); ctx.stroke();
+    drawEyes(-32, -18, 32, -18, 12, false); drawMouth(0, 12, 8);
+  }
+  // 3. PELOSETTO
+  else if (currentKey === 'pelosetto') {
+    ctx.fillStyle = v.accent;
+    ctx.beginPath(); ctx.ellipse(-65, -55, 30, 45, -0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(65, -55, 30, 45, 0.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 20; ctx.shadowColor = v.primary;
+    blobPath(0, 0, 95 * pulseScale, 90 * pulseScale, 0.04, 8); ctx.fill();
+    drawEyes(-30, -5, 30, -5, 14, true); drawMouth(0, 25, 10);
+  }
+  // 4. SPORA
+  else if (currentKey === 'spora') {
+    ctx.fillStyle = v.stemColor; ctx.beginPath();
+    ctx.moveTo(-30, 20); ctx.quadraticCurveTo(-35, 75, -25, 100); ctx.quadraticCurveTo(0, 110, 25, 100); ctx.quadraticCurveTo(35, 75, 30, 20); ctx.fill();
+    ctx.fillStyle = v.capColor; ctx.shadowBlur = 25; ctx.shadowColor = v.primary; ctx.beginPath();
+    ctx.arc(0, 0, 88 * pulseScale, Math.PI * 0.85, Math.PI * 0.15, false); ctx.quadraticCurveTo(0, 35, -88 * pulseScale * Math.cos(Math.PI * 0.15), 88 * pulseScale * Math.sin(Math.PI * 0.15)); ctx.fill();
+    drawEyes(-18, 50, 18, 50, 11, true); drawMouth(0, 70, 7);
+  }
+  // 5. POLPETTO
+  else if (currentKey === 'polpetto') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 15; ctx.shadowColor = v.primary;
+    for (let i = 0; i < 6; i++) {
+      const tx = -50 + i * 20, wave = Math.sin(time * 4 + i) * 12;
+      ctx.beginPath(); ctx.moveTo(tx - 8, 45); ctx.quadraticCurveTo(tx + wave, 85, tx, 95); ctx.quadraticCurveTo(tx - wave, 85, tx + 8, 45); ctx.fill();
+    }
+    blobPath(0, -10, 85 * pulseScale, 80 * pulseScale, 0.04, 2); ctx.fill();
+    drawEyes(-28, -2, 28, -2, 16, true); drawMouth(0, 22, 10);
+  }
+  // 6. GERMOGLIO
+  else if (currentKey === 'germoglio') {
+    ctx.fillStyle = 'rgba(52, 211, 153, 0.35)'; ctx.strokeStyle = v.primary; ctx.lineWidth = 3; ctx.shadowBlur = 30; ctx.shadowColor = v.primary;
+    blobPath(0, 0, 80 * pulseScale, 80 * pulseScale, 0.05, 5); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.translate(0, -78 * pulseScale); ctx.rotate(Math.sin(time * 2) * 0.15);
+    ctx.fillStyle = v.accent; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(25, -25, 10, -50); ctx.quadraticCurveTo(-15, -25, 0, 0); ctx.fill(); ctx.restore();
+    drawEyes(-26, -8, 26, -8, 12, false); drawMouth(0, 16, 8);
+  }
+  // 7. LUCCIOLA
+  else if (currentKey === 'lucciola') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 50; ctx.shadowColor = v.primary;
+    ctx.beginPath(); ctx.arc(0, 0, 75 * pulseScale, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(0, 0, 40 * pulseScale, 0, Math.PI * 2); ctx.fill();
+    drawEyes(-22, -6, 22, -6, 11, true); drawMouth(0, 18, 8);
+  }
+  // 8. STELLA
+  else if (currentKey === 'stella') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 25; ctx.shadowColor = v.primary; ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const r1 = 95 * pulseScale, r2 = 45 * pulseScale;
+      ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
+      const a2 = a + Math.PI / 5;
+      ctx.lineTo(Math.cos(a2) * r2, Math.sin(a2) * r2);
+    }
+    ctx.closePath(); ctx.fill();
+    drawEyes(-22, -5, 22, -5, 13, true); drawMouth(0, 20, 9);
+  }
+  // 9. VORTICE
+  else if (currentKey === 'vortice') {
+    ctx.save(); ctx.rotate(time * 0.5);
+    ctx.strokeStyle = v.primary; ctx.lineWidth = 8; ctx.shadowBlur = 30; ctx.shadowColor = v.accent;
+    ctx.beginPath();
+    for (let a = 0; a < Math.PI * 6; a += 0.1) {
+      const r = (a * 12) * (pulseScale * 0.2);
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.stroke(); ctx.restore();
+    drawEyes(-25, -10, 25, -10, 13, false); drawMouth(0, 18, 9);
+  }
+  // 10. NUVOLA
+  else if (currentKey === 'nuvola') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 25; ctx.shadowColor = v.primary;
+    ctx.beginPath();
+    ctx.arc(-40, 0, 45 * pulseScale, 0, Math.PI * 2);
+    ctx.arc(40, 0, 45 * pulseScale, 0, Math.PI * 2);
+    ctx.arc(0, -30, 55 * pulseScale, 0, Math.PI * 2);
+    ctx.fill();
+    drawEyes(-28, -2, 28, -2, 13, true); drawMouth(0, 22, 10);
+  }
+  // 11. AXOLOTL
+  else if (currentKey === 'axolotl') {
+    ctx.fillStyle = v.secondary;
+    [-1, 1].forEach(side => {
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath(); ctx.ellipse(side * (75 + i * 5), -20 + i * 18, 22, 8, side * 0.3, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 20; ctx.shadowColor = v.primary;
+    blobPath(0, 0, 85 * pulseScale, 75 * pulseScale, 0.03, 4); ctx.fill();
+    drawEyes(-30, -5, 30, -5, 14, true); drawMouth(0, 20, 10);
+  }
+  // 12. GOCCIA
+  else if (currentKey === 'goccia') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 30; ctx.shadowColor = v.primary; ctx.beginPath();
+    ctx.moveTo(0, -100 * pulseScale);
+    ctx.bezierCurveTo(70, -30, 80, 50, 0, 80 * pulseScale);
+    ctx.bezierCurveTo(-80, 50, -70, -30, 0, -100 * pulseScale);
+    ctx.fill();
+    ctx.fillStyle = v.secondary; ctx.beginPath(); ctx.ellipse(-25, -30, 8, 20, -0.4, 0, Math.PI * 2); ctx.fill();
+    drawEyes(-25, 10, 25, 10, 12, false); drawMouth(0, 32, 8);
+  }
+  // 13. LAVA BLOB
+  else if (currentKey === 'lava') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 35; ctx.shadowColor = v.accent;
+    blobPath(0, 0, 95 * pulseScale, 95 * pulseScale, 0.08, 9); ctx.fill();
+    ctx.fillStyle = v.secondary; ctx.beginPath();
+    blobPath(-15, 10, 40 * pulseScale, 35 * pulseScale, 0.06, 2); ctx.fill();
+    drawEyes(-28, -12, 28, -12, 13, false); drawMouth(0, 22, 10);
+  }
+  // 14. CRISTALLO
+  else if (currentKey === 'cristallo') {
+    ctx.fillStyle = v.primary; ctx.shadowBlur = 25; ctx.shadowColor = v.primary; ctx.beginPath();
+    const pts = [[0, -95], [65, -45], [75, 35], [0, 85], [-75, 35], [-65, -45]];
+    pts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p[0] * pulseScale, p[1] * pulseScale); else ctx.lineTo(p[0] * pulseScale, p[1] * pulseScale); });
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = v.secondary; ctx.lineWidth = 2; ctx.stroke();
+    drawEyes(-25, -10, 25, -10, 12, false); drawMouth(0, 20, 8);
+  }
+  // 15. CAMALEONTE
+  else if (currentKey === 'camaleonte') {
+    const shift = (Math.sin(time) + 1) / 2;
+    ctx.fillStyle = shift > 0.5 ? v.primary : v.secondary; ctx.shadowBlur = 25; ctx.shadowColor = v.primary;
+    blobPath(0, 0, 90 * pulseScale, 85 * pulseScale, 0.05, 11); ctx.fill();
+    drawEyes(-30, -8, 30, -8, 15, true); drawMouth(0, 22, 10);
+  }
+
+  ctx.restore();
+}
+
+// ============================================================
+// MAIN ANIMATION LOOP
+// ============================================================
+function draw() {
+  const v = VARIANTS[currentKey];
+  ctx.clearRect(0, 0, LW, LH);
+
+  time += 0.016;
+  breathPhase += 0.025;
+
+  if (blinkPhase === 'idle') {
+    blinkTimer++;
+    if (blinkTimer >= nextBlinkAt) { blinkPhase = 'closing'; blinkTimer = 0; }
+    eyeBlink = Math.max(0, eyeBlink - 0.25);
+  } else if (blinkPhase === 'closing') {
+    blinkTimer++;
+    eyeBlink = Math.min(1, blinkTimer / 3);
+    if (blinkTimer >= 3) { blinkPhase = 'opening'; blinkTimer = 0; }
+  } else if (blinkPhase === 'opening') {
+    blinkTimer++;
+    eyeBlink = Math.max(0, 1 - blinkTimer / 3);
+    if (blinkTimer >= 3) { blinkPhase = 'idle'; blinkTimer = 0; nextBlinkAt = 100 + Math.random() * 180; }
+  }
+
+  eyeCurrentX += (eyeTargetX - eyeCurrentX) * 0.12;
+  eyeCurrentY += (eyeTargetY - eyeCurrentY) * 0.12;
+
+  particles.forEach(p => { p.update(v); p.draw(v); });
+
+  drawAvatar(v);
+  drawButtons(v);
+
+  ctx.save();
+  ctx.fillStyle = v.darkUi ? 'rgba(30,41,59,0.8)' : 'rgba(255,255,255,0.9)';
+  ctx.font = `700 13px ${v.font}`;
+  ctx.fillText(`BIOMA: ${v.label} (${v.cat})`, 28, LH - 20);
+  ctx.restore();
+
+  requestAnimationFrame(draw);
+}
+
+// ============================================================
+// EVENT LISTENERS & MOUSE TRACKING
+// ============================================================
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * LW;
+  const py = (e.clientY - rect.top) / rect.height * LH;
+
+  hoveredButtonId = hitTest(px, py);
+
+  const dx = px - LW / 2;
+  const dy = py - LH / 2;
+  const d = Math.sqrt(dx * dx + dy * dy);
+  if (d > 0) {
+    eyeTargetX = (dx / d) * 9;
+    eyeTargetY = (dy / d) * 9;
+  }
+});
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * LW;
+  const py = (e.clientY - rect.top) / rect.height * LH;
+  const id = hitTest(px, py);
+  if (id) activeStates[id] = !activeStates[id];
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoveredButtonId = null;
+  eyeTargetX = 0; eyeTargetY = 0;
+});
+
+// ============================================================
+// INIZIALIZZAZIONE SWITCHER
+// ============================================================
+Object.keys(VARIANTS).forEach(key => {
+  const b = document.createElement('button');
+  b.dataset.key = key;
+  b.innerHTML = VARIANTS[key].label;
+  b.addEventListener('click', () => setVariant(key));
+  switcher.appendChild(b);
+});
+
+setVariant('ameba');
+draw();
+</script>
+</body>
+</html>
