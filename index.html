@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -54,20 +54,7 @@
 
   canvas { display: block; width: 100%; height: 100%; border-radius: 0; cursor: pointer; touch-action: manipulation; }
 
-  .status {
-    position: fixed; bottom: 4vh; left: 50%; transform: translateX(-50%);
-    z-index: 10; font-size: clamp(10px, 1.4vw, 13px);
-    color: #00cc66; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 0 10px #00ff88;
-    text-align: center; pointer-events: none; transition: color 0.5s ease, opacity 0.8s ease;
-    max-width: 90vw; padding: 0 12px; opacity: 0.35;
-  }
-  .status.sleeping { opacity: 0.22; color: #008855; }
-  .status.talking { opacity: 0.75; color: #00ff88; }
-  .status.greeting { opacity: 0.9; color: #00ffaa; }
-  .status.muted { opacity: 0.9; color: #ffaa44; }
-  .status.ready { opacity: 0.5; color: #00ff88; }
-  .status.unlock { opacity: 0.95; color: #00ff88; }
-
+  /* Subtitle (sottotitoli) */
   .subtitle {
     position: fixed; left: 50%; bottom: 11vh; transform: translateX(-50%);
     z-index: 11; max-width: 86vw; padding: 10px 22px;
@@ -80,7 +67,22 @@
   }
   .subtitle.show { opacity: 1; }
 
-  /* Menu Unificato (ESC / Ingranaggio) */
+  /* Toast temporaneo (in basso) */
+  .toast {
+    position: fixed; left: 50%; bottom: 5vh; transform: translateX(-50%) translateY(10px);
+    z-index: 15; font-size: clamp(11px, 1.5vw, 14px);
+    color: #00ffaa; text-transform: uppercase; letter-spacing: 2px;
+    background: rgba(0,20,11,0.85); border: 1px solid rgba(0,255,157,0.45);
+    border-radius: 8px; padding: 8px 20px;
+    text-shadow: 0 0 8px rgba(0,255,136,0.6);
+    box-shadow: 0 0 22px rgba(0,255,157,0.18);
+    opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s ease;
+    max-width: 88vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.warn { color: #ffaa44; border-color: rgba(255,170,68,0.6); text-shadow: 0 0 8px rgba(255,170,68,0.6); }
+
+  /* Menu Unificato (ESC) */
   #hotkey-menu {
     position: fixed; top: 20px; left: 20px; z-index: 30;
     background: rgba(0,15,9,0.94);
@@ -108,7 +110,6 @@
   }
   #hotkey-menu h3:first-child { margin-top: 0; }
   
-  /* Stile dei pulsanti nel menu */
   .menu-btn {
     display: flex; justify-content: space-between; align-items: center;
     background: transparent; border: 1px solid transparent;
@@ -123,53 +124,20 @@
     text-align: center; font-weight: bold; color: #00ff88; background: rgba(0,255,136,0.06);
   }
   .menu-btn .label { color: rgba(0,255,157,0.65); }
-  
-  /* Stato Attivo */
   .menu-btn.active .key {
     background: rgba(0,255,136,0.35); border-color: #00ff88; color: #ffffff;
     box-shadow: 0 0 8px rgba(0,255,136,0.6);
   }
   .menu-btn.active .label { color: #00ffaa; }
-  
   .menu-sep { border-top: 1px solid rgba(0,255,157,0.2); margin: 6px 0; }
   .menu-footer { font-size: 10px; opacity: 0.55; text-align: center; letter-spacing: 1.5px; margin-top: 6px; }
-
-  /* --- INTERFACCIA MOBILE (TOUCH) --- */
-  #mobile-controls {
-    display: none;
-    position: fixed; inset: 0; pointer-events: none; z-index: 40;
+  .menu-link {
+    display: block; font-size: 11px; color: #00ffaa; text-decoration: none;
+    padding: 4px 8px; border-radius: 6px; word-break: break-all;
+    transition: background 0.15s;
   }
-  @media (pointer: coarse), (max-width: 800px) {
-    #mobile-controls { display: block; }
-  }
-
-  .mobile-btn {
-    pointer-events: auto;
-    position: absolute;
-    background: rgba(0,20,10,0.6);
-    border: 1px solid rgba(0,255,136,0.4);
-    color: #00ff88;
-    font-family: inherit;
-    font-weight: bold;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 0 15px rgba(0,255,136,0.1);
-    transition: all 0.1s;
-  }
-  .mobile-btn:active { background: rgba(0,255,136,0.3); transform: scale(0.95); }
-  .mobile-btn.active {
-    background: rgba(0,255,136,0.3); border-color: #00ff88; color: #ffffff;
-    box-shadow: 0 0 20px rgba(0,255,136,0.5);
-  }
-
-  .bottom-bar {
-    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 12px;
-  }
-  .bottom-bar .mobile-btn { width: 56px; height: 56px; font-size: 20px; position: relative; }
-
-  #gear-btn { top: 20px; left: 20px; width: 40px; height: 40px; font-size: 18px; border-radius: 50%; }
+  .menu-link:hover { background: rgba(0,255,136,0.1); }
+  .menu-version { font-size: 11px; color: rgba(0,255,157,0.75); padding: 4px 8px; letter-spacing: 2px; }
 </style>
 </head>
 <body>
@@ -180,51 +148,30 @@
 </div>
 <div class="crt-overlay"></div>
 
-<!-- Pulsanti Mobile (solo Ingranaggio, il menu è quello unificato) -->
-<div id="mobile-controls">
-  <button id="gear-btn" class="mobile-btn">⚙️</button>
-  <div class="bottom-bar">
-    <button id="btn-mobile-a" class="mobile-btn">A</button>
-    <button id="btn-mobile-t" class="mobile-btn">T</button>
-    <button id="btn-mobile-l" class="mobile-btn">L</button>
-    <button id="btn-mobile-m" class="mobile-btn">M</button>
-  </div>
-</div>
-
-<div class="status unlock" id="status">▶ tap once to enable sound</div>
 <div class="subtitle" id="subtitle"></div>
+<div class="toast" id="toast"></div>
 
-<!-- Menu Unificato -->
+<!-- Menu Unificato (ESC) -->
 <div id="hotkey-menu">
-  <h3>AI MODE</h3>
-  <button class="menu-btn" id="hk-ai-ctx"><span class="key">A</span><span class="label">AI con contesto</span></button>
-  <button class="menu-btn" id="hk-ai"><span class="key">T</span><span class="label">AI senza contesto</span></button>
-  <button class="menu-btn" id="hk-input"><span class="key">←</span><span class="label">apri/chiudi campo</span></button>
-
-  <h3>AVATAR</h3>
-  <button class="menu-btn" id="hk-read"><span class="key">L</span><span class="label">leggi audio_sourge.js</span></button>
-  <button class="menu-btn" id="hk-subs"><span class="key">S</span><span class="label">sottotitoli</span></button>
-  <button class="menu-btn" id="hk-mute"><span class="key">M</span><span class="label">muto audio / stop voce</span></button>
-
-  <h3>MICROFONO</h3>
-  <button class="menu-btn" id="hk-mic"><span class="key">N</span><span class="label">mic reattivo on/off</span></button>
+  <h3>MICROPHONE</h3>
   <button class="menu-btn" id="hk-mic-debug"><span class="key">D</span><span class="label">debug mic</span></button>
 
-  <div class="menu-sep"></div>
-  <button class="menu-btn" id="hk-import">
-    <span class="key" style="min-width: 100px;">📁 Importa</span>
-    <span class="label" id="import-label" style="font-size: 11px;">Carica file locale</span>
-  </button>
-  <input type="file" id="context-file-input" accept=".js,.txt,.mjs" hidden>
-  
-  <div class="menu-footer">Esc per chiudere</div>
+  <h3>INFO</h3>
+  <div class="menu-version">CB-01 · v1.0.2</div>
+  <a class="menu-link" href="https://github.com/cruelben/avatar_ai_cb-01" target="_blank" rel="noopener">github.com/cruelben/avatar_ai_cb-01</a>
+
+  <div class="menu-footer">Esc to close</div>
 </div>
+
+<!-- file picker nascosto -->
+<input type="file" id="context-file-input" accept=".js,.txt,.mjs" hidden>
 
 <script>
 // ============================================================
 // CONFIG
 // ============================================================
 const ZOOM = 1.4;
+const AVATAR_VERSION = 'v1.0.2';
 const PROXY_BASE_URL = 'https://cb01-proxy.cruelben.workers.dev';
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 const GEMINI_SYSTEM_PROMPT = "Sei CB-01, un avatar da scrivania sarcastico. Rispondi breve, massimo 2-3 frasi. Non essere gentile, sii diretto.";
@@ -241,7 +188,7 @@ const MOOD_CONFIG = {
 const AUDIO_CONFIG = {
   chirpVolume: 0.026, greetVolume: 0.025, yawnVolume: 0.114,
   selfTalkVolume: 0.4, lowVolume: 0.4, scheduledVolume: 0.85,
-  readVolume: 0.5, enabled: true
+  readVolume: 0.85, enabled: true
 };
 
 const SELF_TALK_PHRASES = ["che ore sono?","ho fame","che palle","mi annoio","ancora qui?","quasi ora di staccare","un caffè, dai","basta guardarmi","quanto manca?","che sonno"];
@@ -284,29 +231,12 @@ const COLOR_GLOW = 'rgba(0,255,136,0.8)';
 // ============================================================
 const canvas = document.getElementById('avatarCanvas');
 const ctx = canvas.getContext('2d');
-const statusEl = document.getElementById('status');
 const container = document.getElementById('avatarContainer');
 const hotkeyMenuEl = document.getElementById('hotkey-menu');
 const contextFileInput = document.getElementById('context-file-input');
-const importLabel = document.getElementById('import-label');
-
-// Pulsanti del menu
-const hkAiCtx = document.getElementById('hk-ai-ctx');
-const hkAi = document.getElementById('hk-ai');
-const hkInput = document.getElementById('hk-input');
-const hkRead = document.getElementById('hk-read');
-const hkSubs = document.getElementById('hk-subs');
-const hkMute = document.getElementById('hk-mute');
-const hkMic = document.getElementById('hk-mic');
+const toastEl = document.getElementById('toast');
+const subtitleEl = document.getElementById('subtitle');
 const hkMicDebug = document.getElementById('hk-mic-debug');
-const hkImport = document.getElementById('hk-import');
-
-// Pulsanti mobile in basso
-const btnMobileA = document.getElementById('btn-mobile-a');
-const btnMobileT = document.getElementById('btn-mobile-t');
-const btnMobileL = document.getElementById('btn-mobile-l');
-const btnMobileM = document.getElementById('btn-mobile-m');
-const gearBtn = document.getElementById('gear-btn');
 
 // ============================================================
 // HELPERS
@@ -318,6 +248,23 @@ function isTypingInField() {
   if (!el) return false;
   const tag = el.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || el.isContentEditable;
+}
+function basename(p) {
+  if (!p) return '';
+  const s = String(p);
+  const i = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+  return i >= 0 ? s.slice(i + 1) : s;
+}
+
+// --- Toast ---
+let toastTimer = null;
+function toast(msg, isWarn) {
+  if (!toastEl) return;
+  toastEl.textContent = msg;
+  toastEl.classList.toggle('warn', !!isWarn);
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.classList.remove('show'); }, 2500);
 }
 
 // ============================================================
@@ -349,7 +296,7 @@ let nextExpressionAt = Date.now() + rand(MOOD_CONFIG.expressionMinMs, MOOD_CONFI
 let nextSelfTalkAt = Date.now() + rand(MOOD_CONFIG.selfTalkMinMs, MOOD_CONFIG.selfTalkMaxMs);
 
 let audioUnlocked = false;
-let muted = false;
+let muted = false; // M spento di default
 let aiMode = false;
 let aiWithContext = false;
 let aiTextInputOpen = false;
@@ -424,8 +371,11 @@ let mouseIsActive = false;
 let currentEmotion = { browAngle: 0, browHeight: 0, mouthCurve: 0, eyeOpen: 1, mouthWidth: 80, headTilt: 0 };
 let targetEmotion = { ...currentEmotion };
 
-// Stato per l'importazione temporanea
-let customAiContext = null; // Se impostato, sovrascrive audio_sourge.js per la sessione
+let customAiContext = null;
+let importedFileName = '';
+
+let hoveredButtonId = null;
+let canvasMouseX = -1, canvasMouseY = -1;
 
 // ============================================================
 // AUDIO
@@ -824,6 +774,11 @@ function updateReflection() {
 
 document.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * LW;
+  const py = (e.clientY - rect.top) / rect.height * LH;
+  canvasMouseX = px; canvasMouseY = py;
+  hoveredButtonId = hitTestButtons(px, py);
+
   const ccx = rect.left + rect.width / 2; const ccy = rect.top + rect.height / 2;
   const dx = e.clientX - ccx, dy = e.clientY - ccy;
   const dist = Math.sqrt(dx*dx + dy*dy); const maxOffset = 6;
@@ -873,6 +828,214 @@ function drawSleepZs() {
     ctx.restore();
   });
   ctx.restore();
+}
+
+// ============================================================
+// PULSANTI CANVAS (Migliorati visivamente)
+// ============================================================
+const BTN_LAYOUT = {
+  marginX: 24,
+  marginY: 24,
+  buttonW: 48,     // più larghi per far stare meglio le label
+  buttonH: 42,
+  gapY: 14,
+  labelGap: 4,
+  labelFontSize: 8, // leggermente più piccole
+  letterFontSize: 16,
+  radius: 7,
+  importWidth: 110,
+  importHeight: 24,
+  importFontSize: 11,
+  fileNameFontSize: 9
+};
+
+const BTN_LABELS = {
+  A: 'ai-context',
+  T: 'ai-text',
+  L: 'read',
+  S: 'subtitle',
+  M: 'mute',
+  N: 'listen'
+};
+
+function computeButtons() {
+  const { marginX, marginY, buttonW, buttonH, gapY, radius, importWidth, importHeight } = BTN_LAYOUT;
+  const list = [];
+  const colHeight = buttonH * 3 + gapY * 2;
+  const colTop = (LH - colHeight) / 2;
+  
+  const xL = marginX;
+  ['A', 'T', 'L'].forEach((id, i) => {
+    list.push({ id, x: xL, y: colTop + i * (buttonH + gapY), w: buttonW, h: buttonH, label: BTN_LABELS[id], radius });
+  });
+  
+  const xR = LW - marginX - buttonW;
+  ['S', 'M', 'N'].forEach((id, i) => {
+    list.push({ id, x: xR, y: colTop + i * (buttonH + gapY), w: buttonW, h: buttonH, label: BTN_LABELS[id], radius });
+  });
+  
+  list.push({ id: 'IMPORT', label: '📁 OPEN FILE', x: LW - marginX - importWidth, y: marginY, w: importWidth, h: importHeight, radius });
+  return list;
+}
+
+function hitTestButtons(px, py) {
+  const list = computeButtons();
+  for (const b of list) {
+    if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) return b.id;
+  }
+  return null;
+}
+
+function buttonIsActive(id) {
+  if (id === 'A') return aiMode && aiWithContext;
+  if (id === 'T') return aiMode && !aiWithContext;
+  if (id === 'L') return readActive;
+  if (id === 'S') return subtitlesOn;
+  if (id === 'M') return muted;
+  if (id === 'N') return micEnabled && micState === 'active';
+  if (id === 'IMPORT') return customAiContext !== null;
+  return false;
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function drawCanvasButtons() {
+  const list = computeButtons();
+  const { buttonW, buttonH, gapY } = BTN_LAYOUT;
+  
+  // Disegna le linee guida verticali (effetto circuito)
+  const colHeight = buttonH * 3 + gapY * 2;
+  const colTop = (LH - colHeight) / 2;
+  
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(BTN_LAYOUT.marginX + buttonW/2, colTop + buttonH/2);
+  ctx.lineTo(BTN_LAYOUT.marginX + buttonW/2, colTop + colHeight - buttonH/2);
+  ctx.moveTo(LW - BTN_LAYOUT.marginX - buttonW/2, colTop + buttonH/2);
+  ctx.lineTo(LW - BTN_LAYOUT.marginX - buttonW/2, colTop + colHeight - buttonH/2);
+  ctx.strokeStyle = 'rgba(0,255,136,0.15)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  list.forEach(b => {
+    const active = buttonIsActive(b.id);
+    const hover = hoveredButtonId === b.id;
+    const isImport = b.id === 'IMPORT';
+    
+    ctx.save();
+    // Sfondo e Bordo
+    if (active) {
+      ctx.fillStyle = 'rgba(0,255,136,0.35)';
+      ctx.strokeStyle = '#00ff88';
+      ctx.shadowBlur = 18; ctx.shadowColor = 'rgba(0,255,136,0.9)';
+    } else if (hover) {
+      ctx.fillStyle = 'rgba(0,255,136,0.15)';
+      ctx.strokeStyle = 'rgba(0,255,136,0.85)';
+      ctx.shadowBlur = 12; ctx.shadowColor = 'rgba(0,255,136,0.6)';
+    } else {
+      ctx.fillStyle = 'rgba(0,25,12,0.6)';
+      ctx.strokeStyle = 'rgba(0,255,136,0.4)';
+      ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,255,136,0.2)';
+    }
+    ctx.lineWidth = active ? 2 : 1.2;
+    roundRect(b.x, b.y, b.w, b.h, b.radius);
+    ctx.fill(); ctx.stroke();
+
+    // Testo (Lettera o Label Import)
+    ctx.shadowBlur = active ? 12 : 4;
+    ctx.shadowColor = active ? 'rgba(0,255,136,1)' : 'rgba(0,255,136,0.4)';
+    ctx.fillStyle = active ? '#ffffff' : (hover ? '#bfffe0' : 'rgba(0,255,157,0.85)');
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    
+    if (isImport) {
+      ctx.font = `bold ${BTN_LAYOUT.importFontSize}px 'Courier New'`;
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 + 0.5);
+    } else {
+      ctx.font = `bold ${BTN_LAYOUT.letterFontSize}px 'Courier New'`;
+      ctx.fillText(b.id, b.x + b.w / 2, b.y + b.h / 2 + 0.5);
+    }
+    ctx.restore();
+
+    // Etichetta descrittiva sotto
+    if (!isImport) {
+      ctx.save();
+      ctx.font = `${BTN_LAYOUT.labelFontSize}px 'Courier New'`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillStyle = active ? 'rgba(0,255,170,0.95)' : (hover ? 'rgba(0,255,157,0.8)' : 'rgba(0,255,157,0.5)');
+      if (active) { ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,255,136,0.6)'; }
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h + BTN_LAYOUT.labelGap);
+      ctx.restore();
+    }
+  });
+
+  // Nome file sotto IMPORT
+  if (importedFileName) {
+    const impBtn = list.find(b => b.id === 'IMPORT');
+    if (impBtn) {
+      ctx.save();
+      ctx.font = `${BTN_LAYOUT.fileNameFontSize}px 'Courier New'`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(0,255,170,0.8)';
+      ctx.shadowBlur = 4; ctx.shadowColor = 'rgba(0,255,136,0.4)';
+      let name = importedFileName;
+      const maxW = impBtn.w;
+      while (name.length > 3 && ctx.measureText(name).width > maxW) {
+        name = name.slice(0, -2) + '…';
+      }
+      ctx.fillText(name, impBtn.x + impBtn.w / 2, impBtn.y + impBtn.h + 4);
+      ctx.restore();
+    }
+  }
+}
+
+function handleButtonClick(id) {
+  if (id === 'A') {
+    if (aiMode && aiWithContext) exitAiMode();
+    else enterAiMode(true);
+  } else if (id === 'T') {
+    if (aiMode && !aiWithContext) exitAiMode();
+    else enterAiMode(false);
+  } else if (id === 'L') {
+    if (readActive) stopReading(); else startReading();
+  } else if (id === 'S') {
+    subtitlesOn = !subtitlesOn;
+    try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
+    if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+    toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
+  } else if (id === 'M') {
+    muted = !muted;
+    if (muted) { stopSpeaking(); toast('🔇 muted'); }
+    else { toast('🔊 audio on'); }
+    try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
+  } else if (id === 'N') {
+    micEnabled = !micEnabled;
+    try { localStorage.setItem('avatar_mic', micEnabled ? '1' : '0'); } catch (err) {}
+    if (micEnabled) { micAsked = false; startMic(true); toast('🎙 mic on'); }
+    else { stopMic(); toast('🎙 mic off'); }
+  } else if (id === 'IMPORT') {
+    if (customAiContext !== null) {
+      customAiContext = null;
+      importedFileName = '';
+      aiContext = ''; aiContextLoaded = false; aiHistory = [];
+      toast('📄 file context cleared');
+      updateHotkeyMenu();
+    } else {
+      contextFileInput.click();
+    }
+  }
 }
 
 // ============================================================
@@ -986,31 +1149,15 @@ function drawAvatar() {
   const label = aiMode ? (aiProcessing ? 'AI THINKING' : (aiWithContext ? 'AI CONTEXT' : 'AI MODE')) : (currentMood === 'sleeping' ? 'ZzZ' : (isSpeaking ? 'VOICE ACTIVE' : (currentMood === 'awake' ? (micListening ? 'LISTENING' : 'IDLE') : (currentMood === 'greeting' ? 'HELLO' : 'IDLE'))));
   ctx.fillText(label, R - 14, B - 9);
   ctx.restore();
+
+  drawCanvasButtons();
   drawMicDebug();
 }
 
 // ============================================================
 // MOOD STATE MACHINE
 // ============================================================
-function updateStatus(text, cls) { statusEl.innerText = text; statusEl.className = 'status' + (cls ? ' ' + cls : ''); }
-
-function updateMoodUI() {
-  document.body.classList.remove('sleeping'); container.classList.remove('sleeping', 'speaking', 'greeting');
-  if (currentMood === 'sleeping') {
-    document.body.classList.add('sleeping'); container.classList.add('sleeping'); updateStatus('💤', 'sleeping');
-  } else if (currentMood === 'awake') {
-    if (aiMode) { updateStatus(aiWithContext ? '🤖 AI+CTX — premi ← per scrivere' : '🤖 AI MODE — premi ← per scrivere', 'greeting'); }
-    else if (!audioUnlocked) { updateStatus('🔊 tap to enable sound', 'unlock'); }
-    else { updateStatus('', 'ready'); }
-  } else if (currentMood === 'talking') {
-    container.classList.add('speaking'); updateStatus(aiMode ? '🤖 AI sta parlando' : '♪ ♪ ♪', 'talking');
-  } else if (currentMood === 'greeting') {
-    container.classList.add('greeting'); updateStatus(aiMode ? (aiWithContext ? '🤖 AI+CTX' : '🤖 AI MODE') : '👋', 'greeting');
-  }
-  updateMobileButtonsUI();
-}
-
-function enterState(state, durationMs) { currentMood = state; moodStartTime = Date.now(); moodDurationMs = durationMs || 0; updateMoodUI(); }
+function enterState(state, durationMs) { currentMood = state; moodStartTime = Date.now(); moodDurationMs = durationMs || 0; }
 
 function updateMoodState() {
   const now = Date.now();
@@ -1027,9 +1174,6 @@ function updateMoodState() {
   }
 }
 
-// ============================================================
-// EVENT TRIGGERS
-// ============================================================
 function startMicrosleep() { const duration = rand(MOOD_CONFIG.microsleepDurationMinMs, MOOD_CONFIG.microsleepDurationMaxMs); enterState('sleeping', duration); nextMicrosleepAt = Date.now() + rand(MOOD_CONFIG.microsleepMinMs, MOOD_CONFIG.microsleepMaxMs); }
 function wakeFromMicrosleep() { enterState('awake', 0); forcedBlinkQueue = 1; nextMicrosleepAt = Date.now() + rand(MOOD_CONFIG.microsleepMinMs, MOOD_CONFIG.microsleepMaxMs); nextYawnAt = Date.now() + rand(MOOD_CONFIG.yawnMinMs, MOOD_CONFIG.yawnMaxMs); }
 function triggerYawn() { yawnActive = 0.01; yawnPhase = 0; playYawn(); nextYawnAt = Date.now() + rand(MOOD_CONFIG.yawnMinMs, MOOD_CONFIG.yawnMaxMs) * (breakCount > 0 ? 0.5 : 1); }
@@ -1070,7 +1214,6 @@ function fireScheduledEvent(ev) {
 // ============================================================
 // SPEECH
 // ============================================================
-const subtitleEl = document.getElementById('subtitle');
 let subtitlesOn = false;
 let currentSubtitle = '';
 let subtitleHideTimer = null;
@@ -1080,6 +1223,7 @@ function showSubtitle(text) { currentSubtitle = text; clearTimeout(subtitleHideT
 function hideSubtitle(delayMs) { clearTimeout(subtitleHideTimer); subtitleHideTimer = setTimeout(() => { currentSubtitle = ''; subtitleEl.classList.remove('show'); }, delayMs || 0); }
 
 let utterance = null;
+let lastSpeechEnd = 0;
 function speakText(text, volume, onEnd) {
   if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
   if (!text || !text.trim()) { if (onEnd) onEnd(); return; }
@@ -1096,7 +1240,7 @@ function speakText(text, volume, onEnd) {
   const isMale = selectedVoice && maleKeywords.some(k => (selectedVoice.name || '').toLowerCase().includes(k));
   utterance.pitch = isMale ? 1.0 : 0.7;
 
-  utterance.volume = muted ? 0 : (volume || 0.4);
+  utterance.volume = muted ? 0 : 1.0;
   if (selectedVoice) utterance.voice = selectedVoice;
 
   let ended = false;
@@ -1125,20 +1269,16 @@ const READ_CHUNK_MAX = 220;
 const READ_SENTENCE_PAUSE_MS = 350;
 const READ_PARAGRAPH_PAUSE_MS = 900;
 
-function notice(msg) { updateStatus(msg, 'muted'); setTimeout(() => { updateMoodUI(); }, 2500); }
-
 function loadReadFile() {
   return new Promise((resolve, reject) => {
-    // Se c'è un contesto importato temporaneamente, usa quello
     if (customAiContext !== null) {
       resolve(customAiContext);
       return;
     }
-    // Altrimenti carica il file locale
     try { delete window.AUDIO_SOURGE; } catch (e) { window.AUDIO_SOURGE = undefined; }
     const sc = document.createElement('script'); sc.src = READ_FILE + '?t=' + Date.now();
     sc.onload = () => { sc.remove(); resolve(window.AUDIO_SOURGE); };
-    sc.onerror = () => { sc.remove(); reject(new Error('file non trovato')); };
+    sc.onerror = () => { sc.remove(); reject(new Error('file not found')); };
     document.head.appendChild(sc);
   });
 }
@@ -1171,27 +1311,35 @@ function readChunks(src) {
   });
   return out;
 }
-function stopReading() { stopSpeaking(); if (currentMood === 'talking') enterState('awake', 0); notice('📖 lettura interrotta'); }
+function stopReading() {
+  readActive = false; readSession++;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro';
+  if (!aiMode && currentMood === 'talking') enterState('awake', 0);
+  toast('📖 reading interrupted');
+}
 async function startReading() {
   if (readLoading) return;
-  if (!('speechSynthesis' in window)) { notice('📖 voce non supportata'); return; }
-  readLoading = true; updateStatus('📖 carico ' + READ_FILE + '…', 'muted');
+  if (!('speechSynthesis' in window)) { toast('📖 voice not supported', true); return; }
+  readLoading = true; toast('📖 loading ' + (importedFileName || READ_FILE) + '…');
   let src;
   try { src = await loadReadFile(); if (src === undefined && typeof AUDIO_SOURGE !== 'undefined') src = AUDIO_SOURGE; }
-  catch (err) { readLoading = false; notice('📖 ' + READ_FILE + ' non trovato'); return; }
+  catch (err) { readLoading = false; toast('📖 ' + READ_FILE + ' not found', true); return; }
   readLoading = false;
   const chunks = readChunks(src);
-  if (!chunks.length) { notice('📖 file vuoto o senza window.AUDIO_SOURGE'); return; }
+  if (!chunks.length) { toast('📖 file empty or missing window.AUDIO_SOURGE', true); return; }
 
   if (!audioUnlocked) { initAudioContext(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); audioUnlocked = true; }
   if (currentMood === 'sleeping') wakeFromMicrosleep();
-  stopSpeaking(); readActive = true; const my = ++readSession; enterState('talking', 0);
+  if (!aiMode) enterState('talking', 0);
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0;
+  readActive = true; const my = ++readSession;
 
   let i = 0;
   const next = () => {
     if (!readActive || my !== readSession) return;
-    if (currentMood !== 'talking') { readActive = false; return; }
-    if (i >= chunks.length) { readActive = false; setTimeout(() => { if (currentMood === 'talking') enterState('awake', 0); notice('📖 fine lettura'); }, 400); return; }
+    if (i >= chunks.length) { readActive = false; setTimeout(() => { if (!aiMode && currentMood === 'talking') enterState('awake', 0); toast('📖 end of reading'); }, 400); return; }
     const c = chunks[i++]; const watchdogMs = 15000 + c.text.length * 250;
     const watchdog = setTimeout(() => { if (readActive && my === readSession) speechSynthesis.cancel(); }, watchdogMs);
     speakText(c.text, AUDIO_CONFIG.readVolume, () => { clearTimeout(watchdog); if (!readActive || my !== readSession) return; setTimeout(next, c.pause); });
@@ -1204,23 +1352,48 @@ async function startReading() {
 // ============================================================
 function handleInteraction(clickX, clickY) {
   if (aiMode) return;
-  startIdleDetection(); startMic(false);
-  if (!audioUnlocked) { initAudioContext(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); audioUnlocked = true; updateMoodUI(); }
+  startIdleDetection();
+  if (micEnabled) startMic(false);
+  if (!audioUnlocked) { initAudioContext(); if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); audioUnlocked = true; }
   if (currentMood === 'talking' && isSpeaking) stopSpeaking();
   if (currentMood === 'sleeping') {
     wakeFromMicrosleep(); enterState('greeting', MOOD_CONFIG.greetDurationMs); clickTargetX = clickX; clickTargetY = clickY; playGreet(); forcedBlinkQueue = 2; return;
   }
   if (currentMood !== 'greeting') { enterState('greeting', MOOD_CONFIG.greetDurationMs); clickTargetX = clickX; clickTargetY = clickY; playGreet(); forcedBlinkQueue = 1; }
 }
-function onTap(e) {
-  let clickX = window.innerWidth / 2; let clickY = window.innerHeight / 2;
-  if (e && typeof e.clientX === 'number') { clickX = e.clientX; clickY = e.clientY; }
-  handleInteraction(clickX, clickY);
+
+function pointFromEvent(e) {
+  const rect = canvas.getBoundingClientRect();
+  let clientX = 0, clientY = 0;
+  if (e && typeof e.clientX === 'number' && e.clientX !== 0) { clientX = e.clientX; clientY = e.clientY; }
+  else if (e && e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+  else if (e && e.changedTouches && e.changedTouches[0]) { clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
+  else { return null; }
+  return {
+    clientX, clientY,
+    canvasX: (clientX - rect.left) / rect.width * LW,
+    canvasY: (clientY - rect.top) / rect.height * LH
+  };
 }
-document.body.addEventListener('click', onTap);
+
+document.body.addEventListener('click', (e) => {
+  const p = pointFromEvent(e);
+  if (p) {
+    const id = hitTestButtons(p.canvasX, p.canvasY);
+    if (id) { e.stopPropagation(); handleButtonClick(id); return; }
+  }
+  handleInteraction(p ? p.clientX : window.innerWidth / 2, p ? p.clientY : window.innerHeight / 2);
+}, true);
+
 document.body.addEventListener('touchstart', function(e) {
-  if (e.target.closest('.menu-btn') || e.target.closest('.mobile-btn') || e.target.closest('#hotkey-menu')) return;
-  e.preventDefault(); const touch = e.touches[0]; onTap({ clientX: touch.clientX, clientY: touch.clientY });
+  if (e.target.closest('.menu-btn') || e.target.closest('#hotkey-menu')) return;
+  const p = pointFromEvent(e);
+  if (p) {
+    const id = hitTestButtons(p.canvasX, p.canvasY);
+    if (id) { e.preventDefault(); handleButtonClick(id); return; }
+  }
+  e.preventDefault();
+  if (p) handleInteraction(p.clientX, p.clientY);
 }, { passive: false });
 
 document.addEventListener('visibilitychange', () => { if (document.hidden && currentMood === 'talking' && isSpeaking) { stopSpeaking(); if (!aiMode) enterState('awake', 0); } });
@@ -1244,7 +1417,7 @@ function resetWork() { workStart = Date.now(); nextBreakAt = workStart + BREAK_C
 function pickWelcome(mins, hadWarning) { if (hadWarning) return pickFrom(WELCOME_PHRASES.paused); if (mins < 15) return pickFrom(WELCOME_PHRASES.short); if (mins < 60) return pickFrom(WELCOME_PHRASES.mid); return pickFrom(WELCOME_PHRASES.long); }
 function registerAbsence(awayMs) { const hadWarning = breakCount > 0; resetWork(); if (awayMs < BREAK_CONFIG.welcomeMinAwayMs) return; const now = Date.now(); if (now - lastWelcomeAt < 60000) return; lastWelcomeAt = now; welcomePending = { text: pickWelcome(Math.round(awayMs / 60000), hadWarning), at: now }; }
 function nearScheduledEvent() { const now = Date.now(); const d = new Date(); for (const ev of SCHEDULED_EVENTS) { if (ev.active === false) continue; const t = new Date(d.getFullYear(), d.getMonth(), d.getDate(), ev.h, ev.m, 0).getTime(); const diff = t - now; if (diff < BREAK_CONFIG.avoidBeforeEventMs && diff > -BREAK_CONFIG.avoidAfterEventMs) return true; } return false; }
-function cannotSpeakReason() { if (!audioUnlocked) return 'audio non sbloccato (fai un tap)'; if (document.hidden) return 'pagina nascosta'; if (currentMood === 'talking') return 'sta già parlando'; if (currentMood === 'sleeping') return 'dorme'; if (nearScheduledEvent()) return 'vicino a un messaggio schedulato'; return ''; }
+function cannotSpeakReason() { if (!audioUnlocked) return 'audio not unlocked (tap once)'; if (document.hidden) return 'page hidden'; if (currentMood === 'talking') return 'already talking'; if (currentMood === 'sleeping') return 'sleeping'; if (nearScheduledEvent()) return 'near a scheduled event'; return ''; }
 function canSpeakNow() { return !cannotSpeakReason(); }
 
 async function startIdleDetection() { if (!('IdleDetector' in window) || idleDetectorOk) return; try { if (await IdleDetector.requestPermission() !== 'granted') return; const det = new IdleDetector(); det.addEventListener('change', () => { const away = det.userState === 'idle' || det.screenState === 'locked'; if (away && idleSince === null) { idleSince = Date.now() - (det.screenState === 'locked' ? 0 : BREAK_CONFIG.idleThresholdMs); } else if (!away && idleSince !== null) { const awayMs = Date.now() - idleSince; idleSince = null; registerAbsence(awayMs); } }); await det.start({ threshold: BREAK_CONFIG.idleThresholdMs }); idleDetectorOk = true; } catch (e) {} }
@@ -1266,19 +1439,22 @@ setInterval(checkBreak, 15000);
 // ============================================================
 const MIC_CONFIG = { calibrationMs: 2500, voiceRatio: 2.8, voiceMin: 0.007, listenAfterMs: 700, burstGapMs: 450, voiceReplyChance: 0.5, voiceReplyMinMs: 700, voiceReplyCooldownMs: 20000, speakVolume: 0.4, spikeRatio: 5, minLevel: 0.04, spikeMaxMs: 600, crestMin: 8, loudMult: 1.3, cooldownMs: 5000, speakChance: 0.35, silenceBoostAfterMs: 5 * 60 * 1000 };
 
-let micEnabled = true; let micStream = null, micSource = null, micAnalyser = null, micBuf = null;
+let micEnabled = false; let micStream = null, micSource = null, micAnalyser = null, micBuf = null;
 let micStarting = false, micAsked = false; let micStartedAt = 0, micFloor = 0;
-let lastMicReactAt = 0, lastSoundAt = Date.now(), silenceBoosted = false; let lastSpeechEnd = 0;
-let micDebug = false, micLevel = 0, micState = 'spento';
+let lastMicReactAt = 0, lastSoundAt = Date.now(), silenceBoosted = false;
+let micDebug = false, micLevel = 0, micState = 'off';
 let burstStart = 0, burstLastLoud = 0, burstPeak = 0, micListenUntil = 0, micListening = false, lastVoiceReplyAt = 0;
 let micLastEvent = '—', micIgnore = ''; let burstMaxCrest = 0, micCrest = 0, micLastTickAt = Date.now();
 
-try { if (localStorage.getItem('avatar_mic') === '0') micEnabled = false; } catch (e) {}
+try {
+  const stored = localStorage.getItem('avatar_mic');
+  if (stored === '1') micEnabled = true; else micEnabled = false;
+} catch (e) { micEnabled = false; }
 
 async function startMic(force) {
   if (aiMode) return; if (!micEnabled || micStream || micStarting) return; if (micAsked && !force) return;
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { micState = 'non supportato (serve https o localhost)'; updateStatus('🎙 mic non supportato', 'muted'); setTimeout(() => { updateMoodUI(); }, 4000); return; }
-  micStarting = true; micState = 'chiedo permesso'; micAsked = true;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { micState = 'not supported (need https or localhost)'; toast('🎙 mic not supported', true); return; }
+  micStarting = true; micState = 'requesting permission'; micAsked = true;
   try {
     initAudioContext(); if (!audioCtx) return; if (audioCtx.state === 'suspended') audioCtx.resume();
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false } });
@@ -1286,30 +1462,30 @@ async function startMic(force) {
     micStream = stream; micSource = audioCtx.createMediaStreamSource(stream); micAnalyser = audioCtx.createAnalyser();
     micAnalyser.fftSize = 1024; micBuf = new Float32Array(micAnalyser.fftSize); micSource.connect(micAnalyser);
     micStartedAt = Date.now(); micFloor = 0; lastSoundAt = Date.now(); stream.getAudioTracks()[0].addEventListener('ended', stopMic);
-    micState = 'attivo'; updateStatus('🎙 mic attivo', 'ready'); setTimeout(() => { updateMoodUI(); }, 2500);
-  } catch (e) { micState = 'errore: ' + (e && e.name ? e.name : 'sconosciuto'); updateStatus('🎙 mic non disponibile (' + (e && e.name ? e.name : '?') + ')', 'muted'); setTimeout(() => { updateMoodUI(); }, 4000); } finally { micStarting = false; }
+    micState = 'active';
+  } catch (e) { micState = 'error: ' + (e && e.name ? e.name : 'unknown'); toast('🎙 mic unavailable (' + (e && e.name ? e.name : '?') + ')', true); } finally { micStarting = false; }
 }
-function stopMic() { micState = 'spento'; if (micStream) micStream.getTracks().forEach(t => t.stop()); if (micSource) { try { micSource.disconnect(); } catch (e) {} } micStream = null; micSource = null; micAnalyser = null; micBuf = null; }
+function stopMic() { micState = 'off'; if (micStream) micStream.getTracks().forEach(t => t.stop()); if (micSource) { try { micSource.disconnect(); } catch (e) {} } micStream = null; micSource = null; micAnalyser = null; micBuf = null; }
 function micSpeak(text) { enterState('talking', 0); speakText(text, MIC_CONFIG.speakVolume, () => { setTimeout(() => { if (currentMood === 'talking') enterState('awake', 0); }, 400); }); setTimeout(() => { if (currentMood === 'talking') { stopSpeaking(); enterState('awake', 0); } }, 6000); }
-function micReact() { const now = Date.now(); if (now - lastMicReactAt < MIC_CONFIG.cooldownMs) { micLastEvent += ' → in pausa'; return; } lastMicReactAt = now; if (currentMood === 'sleeping') wakeFromMicrosleep(); forcedBlinkQueue = Math.max(forcedBlinkQueue, 1); if (Math.random() < MIC_CONFIG.speakChance && canSpeakNow()) micSpeak(pickFrom(MIC_PHRASES)); activeEmotion = 'sorpreso'; emotionHoldFrames = 120; }
+function micReact() { const now = Date.now(); if (now - lastMicReactAt < MIC_CONFIG.cooldownMs) { micLastEvent += ' → cooldown'; return; } lastMicReactAt = now; if (currentMood === 'sleeping') wakeFromMicrosleep(); forcedBlinkQueue = Math.max(forcedBlinkQueue, 1); if (Math.random() < MIC_CONFIG.speakChance && canSpeakNow()) micSpeak(pickFrom(MIC_PHRASES)); activeEmotion = 'sorpreso'; emotionHoldFrames = 120; }
 function endBurst(now, spikeThr) {
   const dur = Math.round(burstLastLoud - burstStart); const peak = burstPeak; const crest = burstMaxCrest;
   burstStart = 0; burstPeak = 0; burstMaxCrest = 0;
-  const info = dur + 'ms picco ' + peak.toFixed(3) + ' crest ' + crest.toFixed(1);
-  if (dur < MIC_CONFIG.spikeMaxMs && peak > spikeThr && (crest >= MIC_CONFIG.crestMin || peak > spikeThr * MIC_CONFIG.loudMult)) { micLastEvent = 'colpo ' + info; micReact(); return; }
+  const info = dur + 'ms peak ' + peak.toFixed(3) + ' crest ' + crest.toFixed(1);
+  if (dur < MIC_CONFIG.spikeMaxMs && peak > spikeThr && (crest >= MIC_CONFIG.crestMin || peak > spikeThr * MIC_CONFIG.loudMult)) { micLastEvent = 'spike ' + info; micReact(); return; }
   if (dur >= MIC_CONFIG.listenAfterMs && dur < 45000) {
-    micLastEvent = 'voce ' + info; micListenUntil = now + 1500; if (currentMood === 'sleeping') wakeFromMicrosleep();
+    micLastEvent = 'voice ' + info; micListenUntil = now + 1500; if (currentMood === 'sleeping') wakeFromMicrosleep();
     if (dur >= MIC_CONFIG.voiceReplyMinMs) {
       const sinceReply = now - lastVoiceReplyAt; let why = '';
-      if (sinceReply <= MIC_CONFIG.voiceReplyCooldownMs) why = 'pausa ancora ' + Math.ceil((MIC_CONFIG.voiceReplyCooldownMs - sinceReply) / 1000) + 's';
-      else if (Math.random() >= MIC_CONFIG.voiceReplyChance) why = 'non ha "tirato" a rispondere (probabilità)';
+      if (sinceReply <= MIC_CONFIG.voiceReplyCooldownMs) why = 'cooldown ' + Math.ceil((MIC_CONFIG.voiceReplyCooldownMs - sinceReply) / 1000) + 's';
+      else if (Math.random() >= MIC_CONFIG.voiceReplyChance) why = 'not selected (probability)';
       else why = cannotSpeakReason();
-      if (why) micLastEvent += ' → non risponde: ' + why;
-      else { lastVoiceReplyAt = now; micSpeak(pickFrom(VOICE_REPLIES)); micLastEvent += ' → risponde'; }
+      if (why) micLastEvent += ' → no reply: ' + why;
+      else { lastVoiceReplyAt = now; micSpeak(pickFrom(VOICE_REPLIES)); micLastEvent += ' → replies'; }
     }
     return;
   }
-  micLastEvent = 'ignorato: ' + info;
+  micLastEvent = 'ignored: ' + info;
 }
 function micTick() {
   if (!micAnalyser) return; if (aiMode) return; if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
@@ -1320,7 +1496,7 @@ function micTick() {
   const rms = Math.max(rmsRaw, peak * 0.4); micLevel = rms;
   const now = Date.now(); const dt = Math.min(200, now - micLastTickAt); micLastTickAt = now;
   if (now - micStartedAt < MIC_CONFIG.calibrationMs) { micFloor = micFloor === 0 ? rms : lerp(micFloor, rms, Math.min(1, dt / 400)); return; }
-  const reason = (isSpeaking || currentMood === 'talking') ? 'sta parlando' : currentMood === 'greeting' ? 'saluto (5 s dopo un tap)' : yawnActive > 0 ? 'sbadiglio' : (now - lastSpeechEnd < 1000) ? 'eco della sua voce' : '';
+  const reason = (isSpeaking || currentMood === 'talking') ? 'talking' : currentMood === 'greeting' ? 'greeting (5s after tap)' : yawnActive > 0 ? 'yawn' : (now - lastSpeechEnd < 1000) ? 'echo of own voice' : '';
   if (reason) { micIgnore = reason; burstStart = 0; burstPeak = 0; micListening = false; return; }
   micIgnore = '';
   const voiceThr = Math.max(micFloor * MIC_CONFIG.voiceRatio, MIC_CONFIG.voiceMin); const spikeThr = Math.max(micFloor * MIC_CONFIG.spikeRatio, MIC_CONFIG.minLevel);
@@ -1336,11 +1512,11 @@ function drawMicDebug() {
   if (!micDebug) return;
   const x = 39, y = LH - 130; const voiceThr = Math.max(micFloor * MIC_CONFIG.voiceRatio, MIC_CONFIG.voiceMin); const spikeThr = Math.max(micFloor * MIC_CONFIG.spikeRatio, MIC_CONFIG.minLevel);
   ctx.save(); ctx.shadowBlur = 0; ctx.font = '10px monospace'; ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(0,255,157,0.9)';
-  ctx.fillText('MIC: ' + micState + ' | ctx: ' + (audioCtx ? audioCtx.state : 'n/d') + (micListening ? ' | ASCOLTO' : '') + (aiMode ? ' | AI' : ''), x, y);
-  ctx.fillText('lvl ' + micLevel.toFixed(3) + '  fondo ' + micFloor.toFixed(3) + '  crest ' + micCrest.toFixed(1), x, y + 14);
-  ctx.fillText('voce ' + voiceThr.toFixed(3) + '  colpo ' + spikeThr.toFixed(3), x, y + 26);
-  ctx.fillText('evento: ' + micLastEvent, x, y + 38);
-  if (micIgnore) { ctx.fillStyle = '#ffaa44'; ctx.fillText('ignoro: ' + micIgnore, x, y + 50); ctx.fillStyle = 'rgba(0,255,157,0.9)'; }
+  ctx.fillText('MIC: ' + micState + ' | ctx: ' + (audioCtx ? audioCtx.state : 'n/a') + (micListening ? ' | LISTENING' : '') + (aiMode ? ' | AI' : ''), x, y);
+  ctx.fillText('lvl ' + micLevel.toFixed(3) + '  floor ' + micFloor.toFixed(3) + '  crest ' + micCrest.toFixed(1), x, y + 14);
+  ctx.fillText('voice ' + voiceThr.toFixed(3) + '  spike ' + spikeThr.toFixed(3), x, y + 26);
+  ctx.fillText('event: ' + micLastEvent, x, y + 38);
+  if (micIgnore) { ctx.fillStyle = '#ffaa44'; ctx.fillText('ignore: ' + micIgnore, x, y + 50); ctx.fillStyle = 'rgba(0,255,157,0.9)'; }
   const W = 180, H = 6, scale = W / Math.max(spikeThr * 2, 0.05);
   ctx.strokeStyle = 'rgba(0,255,157,0.6)'; ctx.lineWidth = 1;
   ctx.strokeRect(x, y + 58, W, H); ctx.fillRect(x, y + 58, Math.min(W, micLevel * scale), H);
@@ -1350,24 +1526,26 @@ function drawMicDebug() {
 }
 
 // ============================================================
-// MODALITÀ AI (Gemini Flash) — A con contesto / T senza contesto
+// MODALITÀ AI
 // ============================================================
 let aiContext = ''; let aiContextLoaded = false; let aiHistory = [];
 
 async function loadAiContext() {
   if (aiContextLoaded) return;
   try {
-    const src = await loadReadFile(); if (typeof src === 'string') aiContext = src; else if (Array.isArray(src)) aiContext = src.map(String).join('\n\n'); else aiContext = '';
+    const src = customAiContext !== null ? customAiContext : await loadReadFile();
+    if (typeof src === 'string') aiContext = src;
+    else if (Array.isArray(src)) aiContext = src.map(String).join('\n\n');
+    else aiContext = '';
     aiContextLoaded = true;
-  } catch (e) { aiContext = ''; aiContextLoaded = true; console.warn('audio_sourge.js non caricato, AI mode senza contesto'); }
+  } catch (e) { aiContext = ''; aiContextLoaded = true; console.warn('audio_sourge.js not loaded, AI mode without context'); }
 }
 
 async function askGemini(userText) {
   if (aiProcessing) return;
-  if (!PROXY_BASE_URL || PROXY_BASE_URL.includes('IL_TUO_INDIRIZZO')) { notice("🔑 Configura l'URL del proxy nel codice"); return; }
+  if (!PROXY_BASE_URL || PROXY_BASE_URL.includes('IL_TUO_INDIRIZZO')) { toast('🔑 configure proxy URL in code', true); return; }
 
-  aiProcessing = true; updateStatus('🤔 CB-01 sta pensando…', 'talking'); enterState('talking', 0); showSubtitle('…');
-
+  aiProcessing = true; enterState('talking', 0); showSubtitle('…');
   aiHistory.push({ role: 'user', parts: [{ text: userText }] });
 
   let systemText;
@@ -1394,22 +1572,19 @@ ${aiContext}
       body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents: aiHistory, generationConfig: { temperature: 0.7, maxOutputTokens: 300 } })
     });
     const data = await response.json();
-    if (!response.ok) { const msg = (data && data.error && data.error.message) || 'errore API'; throw new Error(msg); }
+    if (!response.ok) { const msg = (data && data.error && data.error.message) || 'API error'; throw new Error(msg); }
     const reply = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || '…';
     aiHistory.push({ role: 'model', parts: [{ text: reply }] });
     aiProcessing = false;
     speakText(reply, 0.9, () => {
       setTimeout(() => {
-        if (aiMode) {
-          enterState('awake', 0);
-          updateStatus(aiWithContext ? '🤖 AI+CTX — premi ← per scrivere' : '🤖 AI MODE — premi ← per scrivere', 'greeting');
-        }
+        if (aiMode) enterState('awake', 0);
       }, 500);
     });
   } catch (err) {
     aiProcessing = false; aiHistory.pop(); console.error('Gemini error:', err);
-    showSubtitle('⚠ ' + err.message); hideSubtitle(3000); updateStatus('⚠ errore API', 'muted');
-    setTimeout(() => { if (aiMode) { enterState('awake', 0); updateStatus(aiWithContext ? '🤖 AI+CTX — premi ← per scrivere' : '🤖 AI MODE — premi ← per scrivere', 'greeting'); } }, 2000);
+    showSubtitle('⚠ ' + err.message); hideSubtitle(3000); toast('⚠ ' + err.message, true);
+    setTimeout(() => { if (aiMode) enterState('awake', 0); }, 2000);
   }
 }
 
@@ -1419,18 +1594,18 @@ async function enterAiMode(withContext) {
   enterState('awake', 0); document.body.classList.add('ai-mode'); aiHistory = [];
 
   if (aiWithContext) {
-    updateStatus('📖 carico contesto…', 'muted'); await loadAiContext();
-    if (aiContext) { updateStatus('🤖 AI+CTX — premi ← per scrivere', 'greeting'); notice('📖 contesto caricato'); }
-    else { aiWithContext = false; updateStatus('🤖 AI MODE — premi ← per scrivere', 'greeting'); notice('📖 audio_sourge.js non trovato, modalità senza contesto'); }
-  } else { updateStatus('🤖 AI MODE — premi ← per scrivere', 'greeting'); }
+    toast('📖 loading context…'); await loadAiContext();
+    if (aiContext) { toast('📖 context loaded'); }
+    else { aiWithContext = false; toast('📖 audio_sourge.js not found, no-context mode', true); }
+  }
   openAiTextInput();
-  updateMobileButtonsUI();
 }
 
 function exitAiMode(silent) {
   aiMode = false; aiWithContext = false; stopSpeaking(); aiTextInputOpen = false; closeAiTextInput(); aiHistory = [];
-  document.body.classList.remove('ai-mode'); startMic(false); updateMoodUI(); if (!silent) notice('🤖 AI MODE off');
-  updateMobileButtonsUI();
+  document.body.classList.remove('ai-mode');
+  if (micEnabled) startMic(false);
+  if (!silent) toast('🤖 AI mode off');
 }
 
 function openAiTextInput() {
@@ -1441,7 +1616,7 @@ function openAiTextInput() {
   wrap.style.cssText = `position: fixed; left: 50%; bottom: 20vh; transform: translateX(-50%); z-index: 20; width: min(80vw, 700px); display: flex; gap: 8px; background: rgba(0,15,9,0.9); border: 1px solid rgba(0,255,157,0.5); border-radius: 10px; padding: 10px; box-shadow: 0 0 30px rgba(0,255,157,0.25);`;
   const input = document.createElement('input');
   input.type = 'text';
-  input.placeholder = aiWithContext ? 'Fai una domanda sul file… (Invio invia, Esc chiude)' : 'Scrivi a CB-01… (Invio invia, Esc chiude)';
+  input.placeholder = aiWithContext ? 'Ask about the file… (Enter to send, Esc to close)' : 'Write to CB-01… (Enter to send, Esc to close)';
   input.style.cssText = `flex: 1; background: rgba(0,0,0,0.5); color: #00ff88; border: 1px solid rgba(0,255,157,0.3); border-radius: 6px; padding: 10px 12px; font-family: inherit; font-size: 15px; outline: none;`;
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && input.value.trim()) { const t = input.value.trim(); input.value = ''; closeAiTextInput(); askGemini(t); }
@@ -1456,58 +1631,37 @@ function closeAiTextInput() { aiTextInputOpen = false; const el = document.getEl
 // MENU & INTERFACCIA
 // ============================================================
 function updateHotkeyMenu() {
-  hkAi.classList.toggle('active', aiMode && !aiWithContext);
-  hkAiCtx.classList.toggle('active', aiMode && aiWithContext);
-  hkInput.classList.toggle('active', aiTextInputOpen);
-  hkRead.classList.toggle('active', readActive);
-  hkSubs.classList.toggle('active', subtitlesOn);
-  hkMute.classList.toggle('active', muted);
-  hkMic.classList.toggle('active', micEnabled && micState === 'attivo');
   hkMicDebug.classList.toggle('active', micDebug);
-  hkImport.classList.toggle('active', customAiContext !== null);
 }
 function openHotkeyMenu() { hotkeyMenuOpen = true; updateHotkeyMenu(); hotkeyMenuEl.classList.add('show'); }
 function closeHotkeyMenu() { hotkeyMenuOpen = false; hotkeyMenuEl.classList.remove('show'); }
 
-function updateMobileButtonsUI() {
-  btnMobileA.classList.toggle('active', aiMode && aiWithContext);
-  btnMobileT.classList.toggle('active', aiMode && !aiWithContext);
-  btnMobileL.classList.toggle('active', readActive);
-  btnMobileM.classList.toggle('active', muted);
-  updateHotkeyMenu(); // Aggiorna anche il menu
-}
-
 // ============================================================
 // GESTIONE IMPORTAZIONE FILE
 // ============================================================
-hkImport.addEventListener('click', () => {
-  contextFileInput.click();
-});
-
 contextFileInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   try {
     const text = await file.text();
     let extracted = text;
-    // Se è un .js, prova a estrarre AUDIO_SOURGE
     if (/\.m?js$/i.test(file.name)) {
       try {
         const fake = {};
         new Function('window', text)(fake);
         if (typeof fake.AUDIO_SOURGE === 'string') extracted = fake.AUDIO_SOURGE;
         else if (Array.isArray(fake.AUDIO_SOURGE)) extracted = fake.AUDIO_SOURGE.join('\n\n');
-      } catch (err) { /* non estraibile, usa il testo grezzo */ }
+      } catch (err) { /* usa testo grezzo */ }
     }
     customAiContext = extracted;
-    importLabel.textContent = '✅ ' + file.name;
-    importLabel.style.color = '#00ffaa';
-    notice('📖 Contesto importato: ' + file.name);
+    importedFileName = basename(file.name);
+    aiContext = ''; aiContextLoaded = false; aiHistory = [];
+    toast('📄 context imported: ' + importedFileName);
     updateHotkeyMenu();
-    contextFileInput.value = ''; // reset
+    contextFileInput.value = '';
     closeHotkeyMenu();
   } catch (err) {
-    alert('Errore di lettura del file: ' + err.message);
+    toast('⚠ ' + err.message, true);
   }
 });
 
@@ -1527,9 +1681,10 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return;
   if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-  if (e.key !== 'Backspace') return;
-  if (!aiMode) { notice('🤖 attiva prima la modalità AI (A o T)'); return; }
-  e.preventDefault(); if (aiTextInputOpen) closeAiTextInput(); else openAiTextInput();
+  if (e.key !== 'Backspace' && e.key !== 'ArrowLeft') return;
+  e.preventDefault();
+  if (!aiMode) { enterAiMode(false); return; }
+  if (aiTextInputOpen) closeAiTextInput(); else openAiTextInput();
 });
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return; if (isTypingInField()) return;
@@ -1542,74 +1697,35 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 'm' && e.key !== 'M') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   muted = !muted;
-  if (muted) { stopSpeaking(); updateStatus('🔇 muted (voce e suoni spenti)', 'muted'); }
-  else { updateStatus('🔊 audio riattivato', 'ready'); }
+  if (muted) { stopSpeaking(); toast('🔇 muted'); }
+  else { toast('🔊 audio on'); }
   try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
-  setTimeout(() => { updateMoodUI(); }, 1500);
 });
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 's' && e.key !== 'S') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   subtitlesOn = !subtitlesOn; try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
   if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
-  updateStatus(subtitlesOn ? '💬 sottotitoli on' : '💬 sottotitoli off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500);
+  toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
 });
 document.addEventListener('keydown', (e) => {
-  if (isTypingInField()) return; if ((e.key !== 'd' && e.key !== 'D') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return; micDebug = !micDebug; updateMobileButtonsUI();
+  if (isTypingInField()) return; if ((e.key !== 'd' && e.key !== 'D') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return; micDebug = !micDebug; updateHotkeyMenu();
 });
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 'n' && e.key !== 'N') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   micEnabled = !micEnabled; try { localStorage.setItem('avatar_mic', micEnabled ? '1' : '0'); } catch (err) {}
-  if (micEnabled) { micAsked = false; startMic(true); } else { stopMic(); }
-  updateStatus(micEnabled ? '🎙 mic on' : '🎙 mic off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500);
+  if (micEnabled) { micAsked = false; startMic(true); toast('🎙 mic on'); }
+  else { stopMic(); toast('🎙 mic off'); }
 });
 
 // ============================================================
-// AZIONI PULSANTI MENU (Click)
+// AZIONI PULSANTI MENU
 // ============================================================
-hkAiCtx.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && aiWithContext) exitAiMode(); else enterAiMode(true); closeHotkeyMenu(); });
-hkAi.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && !aiWithContext) exitAiMode(); else enterAiMode(false); closeHotkeyMenu(); });
-hkInput.addEventListener('click', (e) => { e.stopPropagation(); if (!aiMode) { notice('🤖 attiva prima la modalità AI'); return; } if (aiTextInputOpen) closeAiTextInput(); else openAiTextInput(); closeHotkeyMenu(); });
-hkRead.addEventListener('click', (e) => { e.stopPropagation(); if (readActive) stopReading(); else startReading(); closeHotkeyMenu(); });
-hkSubs.addEventListener('click', (e) => {
-  e.stopPropagation(); subtitlesOn = !subtitlesOn;
-  try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
-  if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
-  updateStatus(subtitlesOn ? '💬 sottotitoli on' : '💬 sottotitoli off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500); closeHotkeyMenu();
-});
-hkMute.addEventListener('click', (e) => {
-  e.stopPropagation(); muted = !muted;
-  if (muted) { stopSpeaking(); updateStatus('🔇 muted', 'muted'); }
-  else { updateStatus('🔊 audio on', 'ready'); }
-  try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
-  setTimeout(() => { updateMoodUI(); }, 1500); closeHotkeyMenu();
-});
-hkMic.addEventListener('click', (e) => {
-  e.stopPropagation(); micEnabled = !micEnabled; try { localStorage.setItem('avatar_mic', micEnabled ? '1' : '0'); } catch (err) {}
-  if (micEnabled) { micAsked = false; startMic(true); } else { stopMic(); }
-  updateStatus(micEnabled ? '🎙 mic on' : '🎙 mic off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500); closeHotkeyMenu();
-});
 hkMicDebug.addEventListener('click', (e) => {
-  e.stopPropagation(); micDebug = !micDebug; updateMobileButtonsUI(); closeHotkeyMenu();
+  e.stopPropagation(); micDebug = !micDebug; updateHotkeyMenu(); closeHotkeyMenu();
 });
 
-// ============================================================
-// AZIONI PULSANTI MOBILE (Basso)
-// ============================================================
-gearBtn.addEventListener('click', (e) => { e.stopPropagation(); if (hotkeyMenuOpen) closeHotkeyMenu(); else openHotkeyMenu(); });
-btnMobileA.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && aiWithContext) exitAiMode(); else enterAiMode(true); });
-btnMobileT.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && !aiWithContext) exitAiMode(); else enterAiMode(false); });
-btnMobileL.addEventListener('click', (e) => { e.stopPropagation(); if (readActive) stopReading(); else startReading(); });
-btnMobileM.addEventListener('click', (e) => {
-  e.stopPropagation(); muted = !muted;
-  if (muted) { stopSpeaking(); updateStatus('🔇 muted', 'muted'); }
-  else { updateStatus('🔊 audio on', 'ready'); }
-  try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
-  setTimeout(() => { updateMoodUI(); }, 1500);
-});
-
-// Chiudi menu cliccando fuori
 document.body.addEventListener('click', (e) => {
-  if (hotkeyMenuOpen && !e.target.closest('#hotkey-menu') && !e.target.closest('#gear-btn')) {
+  if (hotkeyMenuOpen && !e.target.closest('#hotkey-menu')) {
     closeHotkeyMenu();
   }
 });
@@ -1617,7 +1733,9 @@ document.body.addEventListener('click', (e) => {
 // ============================================================
 // STARTUP
 // ============================================================
-try { const m = localStorage.getItem('avatar_muted'); if (m === '1') muted = true; } catch (e) {}
+// Forza l'avvio senza muto (ignora localStorage)
+try { localStorage.removeItem('avatar_muted'); } catch (e) {}
+muted = false;
 
 enterState('awake', 0);
 setInterval(checkScheduledEvents, 5000); checkScheduledEvents();
