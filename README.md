@@ -1,211 +1,197 @@
 # CB-01 · Desk Avatar
 
-Un avatar neon in stile CRT che vive su un secondo monitor mentre lavori. Respira, sbatte le palpebre, sbadiglia, si addormenta per qualche secondo. Parla con la voce italiana del browser, ti avvisa quando è ora di fare una pausa, reagisce ai rumori del microfono e — con la modalità AI — risponde alle tue domande usando Gemini.
+A neon CRT-style avatar that lives on your second monitor while you work. It breathes, blinks, yawns, and takes short naps. It speaks with your browser's Italian voice, reminds you to take breaks, reacts to microphone noises, and — in AI mode — answers your questions using Gemini or Groq.
 
-**Demo:** apri `avatar_ai.html` con Chrome o Edge. Fai un tap. Premi `A` o `T`.
-
----
-
-## Cos'è
-
-CB-01 è un piccolo progetto HTML/JS senza dipendenze, senza build, senza server. Un solo file, un secondo file di testo opzionale (`audio_sourge.js`) che funge da contesto per la modalità AI. Funziona sia da disco (`file://`) sia pubblicato su GitHub Pages.
-
-L'idea è quella di un Tamagotchi da scrivania: non un assistente, non un chatbot, ma una presenza con un po' di carattere che ti tiene compagnia mentre lavori, ti ricorda di staccare e ogni tanto ti prende in giro.
+**Demo:** Open `avatar_ai.html` with Chrome or Edge. Tap once to unlock audio. Press `A` or `T` for AI mode.
 
 ---
 
-## Funzioni principali
+## What is it?
 
-**Vita da scrivania**
-- Respira, sbatte le palpebre, sbadiglia, si addormenta per pochi secondi, cambia espressione.
-- Frasi spontanee ogni tanto ("ho fame", "che palle", "quanto manca?").
-- Reagisce ai rumori del microfono: sobbalza ai colpi secchi, si mette in ascolto se parli.
+CB-01 is a small HTML/JS project with no dependencies, no build step, and no server. It consists of a main file (`avatar_ai.html`), an optional text file (`audio_sourge.js`) used as context for AI mode, and a configuration tool (`avatar_opzioni_6.html`).
 
-**Voce**
-- Legge `audio_sourge.js` ad alta voce con il tasto `L` (utile per promemoria, liste, testi lunghi).
-- Voce italiana del browser, sottotitoli opzionali.
+The idea is a desktop Tamagotchi: not an assistant, not a chatbot, but a presence with some personality that keeps you company while you work, reminds you to take a break, and occasionally makes fun of you.
 
-**Modalità AI**
-- `T` — chat generica con Gemini, con carattere sarcastico e un po' romano.
-- `A` — chat **con contesto**: Gemini risponde basandosi solo sul contenuto di `audio_sourge.js`. Tono neutro e professionale.
-- Mentre aspetta la risposta, l'avatar assume un'espressione "pensierosa".
-- Il campo di scrittura si apre con `Backspace` o con l'ingresso in modalità AI.
-
-**Promemoria pausa**
-- Dopo 60 minuti di lavoro continuo ti avvisa di staccare. Poi ogni 30 minuti, con tono sempre più insistente.
-- Ti saluta quando torni dopo un'assenza (standby, blocco schermo, inattività).
-
-**Messaggi programmati**
-- Frasi a orari fissi (pausa pranzo, fine giornata, ecc.) definite in `SCHEDULED_EVENTS`.
+Thanks to a lightweight serverless proxy (Cloudflare Workers), the avatar can now safely use the Gemini or Groq API **without exposing your API key in the HTML code**. This allows you to publish the avatar on GitHub Pages without the risk of someone stealing your key.
 
 ---
 
-## Scorciatoie
+## Key Features
 
-| Tasto | Funzione |
+**Desktop life**
+- Breathes, blinks, yawns, sleeps for a few seconds, changes expressions.
+- Random spontaneous phrases ("I'm hungry", "what a drag", "how much longer?").
+- Reacts to microphone noises: jumps at sharp sounds, listens when you speak.
+
+**Voice**
+- Reads `audio_sourge.js` out loud with the `L` key.
+- Uses the browser's Italian voice, with optional subtitles.
+
+**AI Mode**
+- `T` — generic chat, with a sarcastic and slightly "Roman" personality.
+- `A` — **context-aware** chat: the AI answers based exclusively on the content of `audio_sourge.js`. Neutral and professional tone.
+- While waiting for a response, the avatar assumes a "thoughtful" expression and twitches its eyebrows.
+- The text input field opens with `Backspace` or by entering AI mode.
+
+**Break Reminders**
+- After 60 minutes of continuous work, it warns you to take a break. Then every 30 minutes, with an increasingly insistent tone.
+- Greets you when you return after an absence (standby, screen lock, inactivity).
+
+**Scheduled Messages**
+- Fixed-time phrases (lunch break, end of day, etc.) defined in `SCHEDULED_EVENTS`.
+
+---
+
+## Shortcuts
+
+| Key | Function |
 |---|---|
-| Tap / click | Saluta, sblocca l'audio, sveglia l'avatar |
-| `A` | Modalità AI **con contesto** (`audio_sourge.js`) |
-| `T` | Modalità AI **senza contesto** (chat generica) |
-| `Backspace` | Apre/chiude il campo di scrittura in modalità AI |
-| `Esc` | Chiude il campo; se chiuso, apre/chiude il menu scorciatoie |
-| `L` | Legge/interrompe `audio_sourge.js` ad alta voce |
-| `S` | Sottotitoli on/off |
-| `M` | Muto sui suoni elettronici (non sulla voce) |
-| `N` | Microfono reattivo on/off |
-| `D` | Mostra/nasconde il misuratore del microfono |
+| Tap / click | Greets, unlocks audio, wakes the avatar (only outside AI mode) |
+| `A` | AI Mode **with context** (`audio_sourge.js`) |
+| `T` | AI Mode **without context** (generic chat) |
+| `Backspace` | Opens/closes the text input field in AI mode |
+| `Esc` | Closes the field; if closed, opens/closes the shortcut menu |
+| `L` | Reads/interrupts `audio_sourge.js` out loud |
+| `S` | Subtitles on/off |
+| `M` | Total audio mute (interrupts voice and turns off sounds) |
+| `N` | Reactive microphone on/off |
+| `D` | Shows/hides the microphone meter |
 
 ---
 
-## Requisiti
+## Requirements
 
-- **Chrome o Edge** (consigliati). Firefox non supporta la Web Speech API per il riconoscimento vocale, ma tutte le altre funzioni sì.
-- Una **chiave API Google Gemini** per la modalità AI (gratuita, senza carta di credito).
-- Per il microfono reattivo: aprire il file da `https://` o da `http://localhost`. Da `file://` Chrome chiede il permesso del microfono a ogni ricarica.
-- Connessione internet per la modalità AI e per il riconoscimento vocale (Chrome manda l'audio ai server Google).
+- **Chrome or Edge** (recommended). Firefox does not support the Web Speech API for voice recognition.
+- A **Google Gemini API key** or **Groq API key** for AI mode.
+- A free **Cloudflare** account (for the proxy).
+- For the reactive microphone: open the file from `https://` or `http://localhost`. From `file://`, Chrome asks for microphone permission on every reload.
 
 ---
 
-## Installazione
+## API Architecture (Cloudflare Proxy)
 
-1. **Scarica i file** (o clona il repo):
+To avoid exposing your API key in the HTML code, the project uses a proxy on Cloudflare Workers.
+
+**How it works:**
+1. Your avatar (locally or on GitHub) sends the question to your Cloudflare Worker (e.g., `https://cb01-proxy.yourname.workers.dev`).
+2. The Worker receives the request, adds your secret API key (securely stored on Cloudflare's servers), and forwards it to Google (Gemini) or Groq.
+3. The provider processes the response, sends it back to the Worker, which then forwards it to your avatar.
+
+This way, anyone looking at your avatar's source code will only see the Worker URL, not your API keys.
+
+### How to set up the Cloudflare proxy
+
+1. **Create an account** at [Cloudflare](https://dash.cloudflare.com).
+2. Go to **Workers & Pages** and click **Create application** > **Create Worker**.
+3. Name your Worker (e.g., `cb01-proxy`) and click **Deploy**.
+4. Click **Edit code**, paste the Worker code (provided in the repo or given to you), and click **Save and Deploy**.
+5. Go to **Settings** > **Variables and Secrets**.
+6. Add your "Secrets":
+   - Click **Add variable** > **Secret**.
+   - **Variable name**: type `GEMINI_API_KEY`.
+   - **Secret value**: paste your Gemini API key.
+   - Click **Save**.
+   - (Optional) Repeat for Groq: **Variable name** `GROQ_API_KEY`, **Secret value** your Groq key.
+7. Copy your Worker URL (e.g., `https://cb01-proxy.yourname.workers.dev`) and paste it into the `avatar_ai.html` file at the line:
+   ```js
+   const PROXY_BASE_URL = 'https://cb01-proxy.yourname.workers.dev';
    ```
-   git clone https://github.com/tuonome/avatar_ai_cb-01.git
+
+---
+
+## Installation (Local or GitHub)
+
+1. **Download the files** (or clone the repo):
+   ```
+   git clone https://github.com/yourname/avatar_ai_cb-01.git
    cd avatar_ai_cb-01
    ```
 
-2. **Apri `avatar_ai.html`** con un editor di testo. Cerca la stringa:
-   ```js
-   const GEMINI_API_KEY = 'INCOLLA_QUI_LA_TUA_CHIAVE';
-   ```
-   Sostituisci `INCOLLA_QUI_LA_TUA_CHIAVE` con la tua chiave API Gemini, **mantenendo gli apici singoli**.
-   La chiave si ottiene gratuitamente da [Google AI Studio](https://aistudio.google.com) → "Get API key".
+2. **Configure the avatar**: open `avatar_ai.html` and make sure the `PROXY_BASE_URL` constant points to your Cloudflare Worker (see section above).
 
-3. **Apri il file** con Chrome o Edge. Fai un tap per sbloccare l'audio. Fatti un giro con le scorciatoie.
+3. **Open the file** with Chrome or Edge. Tap once to unlock audio. Try out the shortcuts.
 
 ---
 
-## Come preparare il contenuto per la modalità A
+## How to prepare content for AI Mode (A)
 
-La modalità **A** usa il contenuto di `audio_sourge.js` come base di conoscenza. Puoi metterci qualsiasi cosa: un manuale, degli appunti, una specifica tecnica, un testo che vuoi consultare a voce.
+AI mode `A` uses the content of `audio_sourge.js` as a knowledge base. You can put anything in there: a manual, notes, a technical spec, or text you want to consult by voice.
 
-**Modo più semplice:** apri `audio_sourge.js` con un editor di testo e scrivi il contenuto tra i backtick:
-
+**Simplest way:** open `audio_sourge.js` with a text editor and write the content between the backticks:
 ```js
-window.AUDIO_SOURGE = `Qui va il tuo testo.
+window.AUDIO_SOURGE = `Here goes your text.
 
-Una riga vuota = nuovo paragrafo.
-
-Puoi scrivere quanto vuoi, anche molto lungo.`;
+An empty line = new paragraph.
+`;
 ```
 
-**Modo consigliato:** usa il tool `avatar_opzioni_6.html`, scheda "📖 Audio Source Editor". Incolla il testo, esporta come `audio_sourge.js`, e sostituisci il file vecchio.
-
-Dopodiché, in modalità A, chiedi a CB-01 cose sul contenuto del file. Lui risponderà solo in base a quello.
+**Recommended way:** use the `avatar_opzioni_6.html` tool, "📖 Audio Source Editor" tab. Paste the text, export it as `audio_sourge.js`, and replace the old file.
 
 ---
 
-## Il tool delle opzioni
+## The Options Tool (`avatar_opzioni_6.html`)
 
-`avatar_opzioni_6.html` è un editor unificato che ti permette di modificare l'avatar senza toccare il codice a mano. Ha tre schede:
+This is a unified editor that lets you modify the avatar without touching the code manually. It has three tabs:
+- **📅 Schedule & Phrases** — scheduled messages, reactive sound phrases, and voice reply phrases.
+- **🔊 Audio & Reactivity** — voice and sound volumes, microphone thresholds.
+- **📖 Audio Source Editor** — the text of `audio_sourge.js`.
 
-- **📅 Schedule e Frasi** — messaggi programmati agli orari fissi, frasi di risposta ai rumori, frasi di risposta alla voce.
-- **🔊 Audio e Reattività** — volumi della voce e dei suoni, soglie del microfono, profili pronti ("Calmo", "Normale", "Sensibile").
-- **📖 Audio Source Editor** — il testo di `audio_sourge.js`, con esportazione nel formato corretto.
-
-Apri il tool, carica `avatar_ai.html`, modifica quello che ti serve, premi "💾 GENERA INDEX.HTML" e ottieni un file nuovo con le modifiche. Il tool non tocca la logica dell'avatar, solo i parametri.
+Open the tool, load `avatar_ai.html`, make your changes, click "💾 GENERA INDEX.HTML", and you'll get a new file with the modifications.
 
 ---
 
-## Personalizzazione
+## Customization
 
-**Cambiare il carattere della chat (modalità T).** In `avatar_ai.html`, cerca:
+**Changing the chat personality (T mode).** In `avatar_ai.html`, search for:
 ```js
-const GEMINI_SYSTEM_PROMPT = "Sei CB-01, un avatar da scrivania sarcastico e un po' romano...";
+const GEMINI_SYSTEM_PROMPT = "Sei CB-01, un avatar da scrivania sarcastico...";
 ```
-Modifica il testo a piacere.
 
-**Cambiare il tono della voce.** In `speakText`, cerca `utterance.rate` e `utterance.pitch`. Valori tipici: `rate = 0.95`, `pitch = 1.05`. Più alto il rate, più veloce; più alto il pitch, più acuto.
+**Changing the voice tone.** Search for `utterance.rate` and `utterance.pitch` inside `speakText`.
 
-**Cambiare i messaggi programmati.** Modifica `SCHEDULED_EVENTS` in `avatar_ai.html`, o usa la scheda "Schedule e Frasi" del tool.
-
-**Cambiare i tempi del promemoria pausa.** Modifica `BREAK_CONFIG` in `avatar_ai.html`. I valori attuali sono: primo avviso dopo 60 minuti, poi ogni 30.
-
-**Cambiare il modello Gemini.** Cerca:
+**Changing the AI model.** Search for:
 ```js
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 ```
-Se Google depreca il modello, questo è il punto da aggiornare. I nomi attuali li trovi su [AI Studio](https://aistudio.google.com).
+*(Model names change frequently: if you get an error, update this value).*
 
 ---
 
-## Pubblicare su GitHub Pages
+## Publishing on GitHub Pages
 
-Puoi pubblicare l'avatar su GitHub Pages, ma **fai attenzione alla chiave API**.
+Now that the API keys are safely stored on Cloudflare, **you can publish your avatar on GitHub Pages with total peace of mind**. The HTML file contains no secrets, so GitHub won't block you and no one can steal your keys.
 
-Un file HTML servito da GitHub Pages è **statico**: qualsiasi cosa ci sia scritta, chiunque può leggerla con "Visualizza sorgente". Quindi, se metti la chiave in chiaro nel file e lo pubblichi, chiunque può copiarla.
-
-**Cosa rischi concretamente:** non hai attivato la fatturazione su Google Cloud, quindi il danno massimo è che qualcuno esaurisca la tua quota gratuita. Il tuo avatar smette di funzionare fino al reset (mezzanotte, ora del Pacifico — in Italia sono le 9 o le 10 del mattino). Poi riparte.
-
-**Come ridurre il rischio (30 secondi):**
-1. Vai su [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials.
-2. Trova la tua chiave, clicca "Edit".
-3. In "Application restrictions" scegli "HTTP referrers" e aggiungi `tuonome.github.io/*`.
-4. In "API restrictions" limita la chiave alla sola "Generative Language API".
-
-Così, anche se qualcuno la trova, non può usarla da un altro sito.
-
----
-
-## Struttura del repository
-
+**Repository structure:**
 ```
 avatar_ai_cb-01/
-├── avatar_ai.html          # l'avatar completo (contiene la chiave API)
-├── audio_sourge.js         # il testo usato dalla modalità A e dal tasto L
-├── avatar_opzioni_6.html   # editor di configurazione (opzionale, ma comodo)
-└── README.md               # questo file
+├── avatar_ai.html          # the complete avatar (without API keys)
+├── audio_sourge.js         # the text used for AI mode and the L key
+├── avatar_opzioni_6.html   # configuration editor (optional)
+└── README.md               # this file
 ```
 
 ---
 
-## Note tecniche
+## Technical Notes
 
-- **Canvas 2D** per il disegno dell'avatar (nessuna libreria).
-- **Web Audio API** per i suoni elettronici (saluto, sbadiglio).
-- **speechSynthesis** per la voce italiana.
-- **getUserMedia + AnalyserNode** per il microfono reattivo (analisi locale del volume, nessun audio registrato o inviato).
-- **Idle Detection API** (solo Chromium, con permesso) per rilevare le pause.
-- **Gemini API** (`generateContent`) per la modalità AI.
-- **localStorage** per ricordare le impostazioni (muto, sottotitoli, microfono).
-
----
-
-## Cosa NON fa
-
-- **Non registra** la tua voce. Il microfono reattivo misura solo il volume (RMS e picco), non salva né invia nulla.
-- **Non ti spia**. Tutto gira nel browser, niente server, niente analytics.
-- **Non sostituisce un assistente**. È un avatar decorativo. Non è pensato per rispondere a domande complesse, per gestire codice, o per fare task. È pensato per starti simpatico mentre lavori.
+- **Canvas 2D** for drawing the avatar (no libraries).
+- **Web Audio API** for electronic sounds (greeting, yawn).
+- **speechSynthesis** for the Italian voice.
+- **getUserMedia + AnalyserNode** for the reactive microphone (local volume analysis, no audio recorded or sent).
+- **Idle Detection API** (Chromium only) to detect breaks.
+- **Gemini API / Groq API** for AI mode, via Cloudflare proxy.
+- **localStorage** to remember settings (muted, subtitles, microphone).
 
 ---
 
-## Problemi noti
+## What it does NOT do
 
-- **Su `file://`** Chrome chiede il permesso del microfono a ogni ricarica. Se ti dà fastidio, apri il file da un server locale (`python -m http.server`) o pubblicalo su GitHub Pages.
-- **Firefox** non supporta `SpeechRecognition`, quindi la voce in input non funziona. Tutto il resto sì.
-- **Se due eventi programmati cadono nello stesso minuto**, ne parte solo uno. È un limite noto, non un bug.
-- **Il modello Gemini cambia nome spesso.** Se ricevi un errore "model not found", aggiorna `GEMINI_MODEL` con uno dei modelli attivi su AI Studio.
-
----
-
-## Crediti
-
-Progetto personale, scritto per uso proprio. Se ti piace, prendilo, modificalo, fanne quello che vuoi.
-
-Se trovi un bug o hai un'idea, apri una issue. Non garantisco tempi di risposta, ma leggo tutto.
+- **Does not record** your voice. The reactive microphone only measures volume.
+- **Does not spy on you**. Everything runs in your browser and on your personal proxy.
+- **Does not replace an assistant**. It is a decorative avatar.
 
 ---
 
-## Licenza
+## License
 
-MIT — fai quello che ti pare, non mi assumo nessuna responsabilità.
+MIT — do whatever you want with it, I take no responsibility.

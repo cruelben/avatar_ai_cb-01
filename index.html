@@ -157,7 +157,7 @@
   <div class="row"><span class="key">Tap</span><span class="label">saluta / sblocca audio</span></div>
   <div class="row" id="hk-read"><span class="key">L</span><span class="label">leggi audio_sourge.js</span></div>
   <div class="row" id="hk-subs"><span class="key">S</span><span class="label">sottotitoli</span></div>
-  <div class="row" id="hk-mute"><span class="key">M</span><span class="label">muto suoni elettronici</span></div>
+  <div class="row" id="hk-mute"><span class="key">M</span><span class="label">muto audio / stop voce</span></div>
 
   <h3>MICROFONO</h3>
   <div class="row" id="hk-mic"><span class="key">N</span><span class="label">mic reattivo on/off</span></div>
@@ -172,10 +172,8 @@
 // ============================================================
 const ZOOM = 1.4;
 
-// Chiave API spezzata per non attivare il blocco di GitHub Push Protection
-const KEY_PART_1 = 'AQ.Ab8RN6LQlqL9IEvBuQVGo7w--hIClUcG4';
-const KEY_PART_2 = 'dz2Det0DvBcoE-nBA';
-const GEMINI_API_KEY = KEY_PART_1 + KEY_PART_2;
+// --- URL DEL TUO PROXY CLOUDFLARE ---
+const PROXY_BASE_URL = 'https://cb01-proxy.cruelben.workers.dev';
 
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 const GEMINI_SYSTEM_PROMPT = "Sei CB-01, un avatar da scrivania sarcastico. Rispondi breve, massimo 2-3 frasi. Non essere gentile, sii diretto.";
@@ -1386,7 +1384,10 @@ function speakText(text, volume, onEnd) {
   utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = getBrowserSpeechLanguage();
   utterance.rate = 0.95; utterance.pitch = 1.05;
-  utterance.volume = volume || 0.4;
+  
+  // Se il muto è attivo, imposta il volume a 0 (la bocca si muove, ma non si sente)
+  utterance.volume = muted ? 0 : (volume || 0.4);
+  
   if (selectedVoice) utterance.voice = selectedVoice;
 
   let ended = false;
@@ -1917,8 +1918,9 @@ async function loadAiContext() {
 
 async function askGemini(userText) {
   if (aiProcessing) return;
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'INCOLLA_QUI_LA_TUA_CHIAVE') {
-    notice('🔑 manca la chiave API');
+  
+  if (!PROXY_BASE_URL || PROXY_BASE_URL.includes('IL_TUO_INDIRIZZO')) {
+    notice("🔑 Configura l'URL del proxy nel codice");
     return;
   }
 
@@ -1949,7 +1951,7 @@ ${aiContext}
     systemText = GEMINI_SYSTEM_PROMPT;
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `${PROXY_BASE_URL}/gemini/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
   try {
     const response = await fetch(url, {
@@ -2161,12 +2163,17 @@ document.addEventListener('keydown', (e) => {
   if (readActive) stopReading(); else startReading();
 });
 
-// Tasto M: muto
+// Tasto M: muto e stop voce
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return;
   if ((e.key !== 'm' && e.key !== 'M') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   muted = !muted;
-  updateStatus(muted ? '🔇 muted' : '', muted ? 'muted' : 'ready');
+  if (muted) {
+    stopSpeaking(); // Ferma immediatamente la voce se sta parlando
+    updateStatus('🔇 muted (voce e suoni spenti)', 'muted');
+  } else {
+    updateStatus('🔊 audio riattivato', 'ready');
+  }
   try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
   setTimeout(() => { updateMoodUI(); }, 1500);
 });
