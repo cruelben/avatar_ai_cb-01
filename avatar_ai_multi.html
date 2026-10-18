@@ -80,6 +80,7 @@
   }
   .subtitle.show { opacity: 1; }
 
+  /* Menu Unificato (ESC / Ingranaggio) */
   #hotkey-menu {
     position: fixed; top: 20px; left: 20px; z-index: 30;
     background: rgba(0,15,9,0.94);
@@ -92,53 +93,52 @@
     box-shadow: 0 0 30px rgba(0,255,157,0.25);
     max-width: 320px;
     display: none;
+    flex-direction: column;
+    gap: 4px;
   }
-  #hotkey-menu.show { display: block; }
+  #hotkey-menu.show { display: flex; }
   #hotkey-menu h3 {
     font-size: 11px;
     letter-spacing: 3px;
     color: #00ffaa;
-    margin: 0 0 6px 0;
+    margin: 10px 0 4px 0;
     text-transform: uppercase;
     border-bottom: 1px solid rgba(0,255,157,0.25);
     padding-bottom: 4px;
   }
-  #hotkey-menu h3:not(:first-child) { margin-top: 12px; }
-  #hotkey-menu .row { display: flex; justify-content: space-between; gap: 16px; }
-  #hotkey-menu .key {
-    display: inline-block;
-    min-width: 60px;
-    padding: 1px 6px;
-    border: 1px solid rgba(0,255,157,0.4);
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
-    color: #00ff88;
-    background: rgba(0,255,136,0.06);
+  #hotkey-menu h3:first-child { margin-top: 0; }
+  
+  /* Stile dei pulsanti nel menu */
+  .menu-btn {
+    display: flex; justify-content: space-between; align-items: center;
+    background: transparent; border: 1px solid transparent;
+    padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    font-family: inherit; font-size: 12px; letter-spacing: 1px;
+    transition: all 0.15s;
   }
-  #hotkey-menu .label { color: rgba(0,255,157,0.65); }
-  #hotkey-menu .row.active .key {
-    background: rgba(0,255,136,0.35);
-    border-color: #00ff88;
-    color: #ffffff;
+  .menu-btn:hover { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); }
+  .menu-btn .key {
+    display: inline-block; min-width: 50px; padding: 2px 6px;
+    border: 1px solid rgba(0,255,157,0.4); border-radius: 4px;
+    text-align: center; font-weight: bold; color: #00ff88; background: rgba(0,255,136,0.06);
+  }
+  .menu-btn .label { color: rgba(0,255,157,0.65); }
+  
+  /* Stato Attivo */
+  .menu-btn.active .key {
+    background: rgba(0,255,136,0.35); border-color: #00ff88; color: #ffffff;
     box-shadow: 0 0 8px rgba(0,255,136,0.6);
   }
-  #hotkey-menu .row.active .label { color: #00ffaa; }
-  #hotkey-menu .footer {
-    margin-top: 12px;
-    font-size: 10px;
-    opacity: 0.55;
-    text-align: center;
-    letter-spacing: 1.5px;
-  }
+  .menu-btn.active .label { color: #00ffaa; }
+  
+  .menu-sep { border-top: 1px solid rgba(0,255,157,0.2); margin: 6px 0; }
+  .menu-footer { font-size: 10px; opacity: 0.55; text-align: center; letter-spacing: 1.5px; margin-top: 6px; }
 
   /* --- INTERFACCIA MOBILE (TOUCH) --- */
   #mobile-controls {
-    display: none; /* Nascosto di default (PC) */
+    display: none;
     position: fixed; inset: 0; pointer-events: none; z-index: 40;
   }
-  
-  /* Mostra solo su dispositivi touch / schermi piccoli */
   @media (pointer: coarse), (max-width: 800px) {
     #mobile-controls { display: block; }
   }
@@ -157,55 +157,19 @@
     box-shadow: 0 0 15px rgba(0,255,136,0.1);
     transition: all 0.1s;
   }
-  .mobile-btn:active {
-    background: rgba(0,255,136,0.3);
-    transform: scale(0.95);
-  }
+  .mobile-btn:active { background: rgba(0,255,136,0.3); transform: scale(0.95); }
   .mobile-btn.active {
-    background: rgba(0,255,136,0.3);
-    border-color: #00ff88;
-    color: #ffffff;
+    background: rgba(0,255,136,0.3); border-color: #00ff88; color: #ffffff;
     box-shadow: 0 0 20px rgba(0,255,136,0.5);
   }
 
-  /* Pulsanti principali in basso */
   .bottom-bar {
-    position: absolute;
-    bottom: 20px; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
     display: flex; gap: 12px;
   }
-  .bottom-bar .mobile-btn {
-    width: 56px; height: 56px;
-    font-size: 20px;
-    position: relative;
-  }
+  .bottom-bar .mobile-btn { width: 56px; height: 56px; font-size: 20px; position: relative; }
 
-  /* Ingranaggio in alto a sinistra */
-  #gear-btn {
-    top: 20px; left: 20px;
-    width: 40px; height: 40px;
-    font-size: 18px;
-    border-radius: 50%;
-  }
-
-  /* Menu secondario (S, N, D) */
-  #gear-menu {
-    pointer-events: auto;
-    position: absolute; top: 70px; left: 20px;
-    background: rgba(0,20,10,0.9);
-    border: 1px solid rgba(0,255,136,0.4);
-    border-radius: 10px;
-    padding: 10px;
-    display: none;
-    flex-direction: column; gap: 10px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-  }
-  #gear-menu.show { display: flex; }
-  #gear-menu .mobile-btn {
-    position: relative;
-    width: 44px; height: 44px;
-    font-size: 16px;
-  }
+  #gear-btn { top: 20px; left: 20px; width: 40px; height: 40px; font-size: 18px; border-radius: 50%; }
 </style>
 </head>
 <body>
@@ -216,14 +180,9 @@
 </div>
 <div class="crt-overlay"></div>
 
-<!-- Pulsanti Mobile -->
+<!-- Pulsanti Mobile (solo Ingranaggio, il menu è quello unificato) -->
 <div id="mobile-controls">
   <button id="gear-btn" class="mobile-btn">⚙️</button>
-  <div id="gear-menu">
-    <button id="btn-mobile-s" class="mobile-btn">S</button>
-    <button id="btn-mobile-n" class="mobile-btn">N</button>
-    <button id="btn-mobile-d" class="mobile-btn">D</button>
-  </div>
   <div class="bottom-bar">
     <button id="btn-mobile-a" class="mobile-btn">A</button>
     <button id="btn-mobile-t" class="mobile-btn">T</button>
@@ -235,24 +194,30 @@
 <div class="status unlock" id="status">▶ tap once to enable sound</div>
 <div class="subtitle" id="subtitle"></div>
 
+<!-- Menu Unificato -->
 <div id="hotkey-menu">
   <h3>AI MODE</h3>
-  <div class="row" id="hk-ai-ctx"><span class="key">A</span><span class="label">AI con contesto</span></div>
-  <div class="row" id="hk-ai"><span class="key">T</span><span class="label">AI senza contesto</span></div>
-  <div class="row" id="hk-input"><span class="key">←</span><span class="label">apri/chiudi campo</span></div>
-  <div class="row" id="hk-esc"><span class="key">Esc</span><span class="label">chiudi / menu</span></div>
+  <button class="menu-btn" id="hk-ai-ctx"><span class="key">A</span><span class="label">AI con contesto</span></button>
+  <button class="menu-btn" id="hk-ai"><span class="key">T</span><span class="label">AI senza contesto</span></button>
+  <button class="menu-btn" id="hk-input"><span class="key">←</span><span class="label">apri/chiudi campo</span></button>
 
   <h3>AVATAR</h3>
-  <div class="row"><span class="key">Tap</span><span class="label">saluta / sblocca audio</span></div>
-  <div class="row" id="hk-read"><span class="key">L</span><span class="label">leggi audio_sourge.js</span></div>
-  <div class="row" id="hk-subs"><span class="key">S</span><span class="label">sottotitoli</span></div>
-  <div class="row" id="hk-mute"><span class="key">M</span><span class="label">muto audio / stop voce</span></div>
+  <button class="menu-btn" id="hk-read"><span class="key">L</span><span class="label">leggi audio_sourge.js</span></button>
+  <button class="menu-btn" id="hk-subs"><span class="key">S</span><span class="label">sottotitoli</span></button>
+  <button class="menu-btn" id="hk-mute"><span class="key">M</span><span class="label">muto audio / stop voce</span></button>
 
   <h3>MICROFONO</h3>
-  <div class="row" id="hk-mic"><span class="key">N</span><span class="label">mic reattivo on/off</span></div>
-  <div class="row" id="hk-mic-debug"><span class="key">D</span><span class="label">debug mic</span></div>
+  <button class="menu-btn" id="hk-mic"><span class="key">N</span><span class="label">mic reattivo on/off</span></button>
+  <button class="menu-btn" id="hk-mic-debug"><span class="key">D</span><span class="label">debug mic</span></button>
 
-  <div class="footer">Esc per chiudere</div>
+  <div class="menu-sep"></div>
+  <button class="menu-btn" id="hk-import">
+    <span class="key" style="min-width: 100px;">📁 Importa</span>
+    <span class="label" id="import-label" style="font-size: 11px;">Carica file locale</span>
+  </button>
+  <input type="file" id="context-file-input" accept=".js,.txt,.mjs" hidden>
+  
+  <div class="menu-footer">Esc per chiudere</div>
 </div>
 
 <script>
@@ -292,7 +257,6 @@ const SCHEDULED_EVENTS = [
   { h: 17, m: 15, sequence: ["guarda che il treno non ti aspetta","","non fare il coglione"] },
 ];
 
-// --- FRASI AGGIORNATE ---
 const VOICE_REPLIES = [
   "e?", "dimmi", "come dici?", "sì sì", "mi ascolti?", "parla pure", 
   "ti sto sentendo", "cosa c'è?", "dimmi tutto", "ti ascolto", 
@@ -323,15 +287,26 @@ const ctx = canvas.getContext('2d');
 const statusEl = document.getElementById('status');
 const container = document.getElementById('avatarContainer');
 const hotkeyMenuEl = document.getElementById('hotkey-menu');
-const gearMenuEl = document.getElementById('gear-menu');
+const contextFileInput = document.getElementById('context-file-input');
+const importLabel = document.getElementById('import-label');
 
+// Pulsanti del menu
+const hkAiCtx = document.getElementById('hk-ai-ctx');
+const hkAi = document.getElementById('hk-ai');
+const hkInput = document.getElementById('hk-input');
+const hkRead = document.getElementById('hk-read');
+const hkSubs = document.getElementById('hk-subs');
+const hkMute = document.getElementById('hk-mute');
+const hkMic = document.getElementById('hk-mic');
+const hkMicDebug = document.getElementById('hk-mic-debug');
+const hkImport = document.getElementById('hk-import');
+
+// Pulsanti mobile in basso
 const btnMobileA = document.getElementById('btn-mobile-a');
 const btnMobileT = document.getElementById('btn-mobile-t');
 const btnMobileL = document.getElementById('btn-mobile-l');
 const btnMobileM = document.getElementById('btn-mobile-m');
-const btnMobileS = document.getElementById('btn-mobile-s');
-const btnMobileN = document.getElementById('btn-mobile-n');
-const btnMobileD = document.getElementById('btn-mobile-d');
+const gearBtn = document.getElementById('gear-btn');
 
 // ============================================================
 // HELPERS
@@ -448,6 +423,9 @@ let mouseIsActive = false;
 
 let currentEmotion = { browAngle: 0, browHeight: 0, mouthCurve: 0, eyeOpen: 1, mouthWidth: 80, headTilt: 0 };
 let targetEmotion = { ...currentEmotion };
+
+// Stato per l'importazione temporanea
+let customAiContext = null; // Se impostato, sovrascrive audio_sourge.js per la sessione
 
 // ============================================================
 // AUDIO
@@ -594,10 +572,8 @@ function pickVoice() {
   const browserLang = norm(getBrowserSpeechLanguage());
   const baseLang = browserLang.split('-')[0];
 
-  // Cerca prima una voce italiana
   let italianVoices = voices.filter(v => norm(v.lang).split('-')[0] === 'it');
   if (italianVoices.length > 0) {
-    // Cerca una voce maschile tra quelle italiane
     const maleKeywords = ['male', 'uomo', 'maschile', 'cosimo', 'diego', 'luca', 'paolo', 'roberto', 'andrea'];
     let maleVoice = italianVoices.find(v => {
       const name = (v.name || '').toLowerCase();
@@ -605,19 +581,15 @@ function pickVoice() {
     });
     if (maleVoice) return maleVoice;
     
-    // Se non trova parole chiave maschili, prova a escludere nomi tipicamente femminili
     const femaleKeywords = ['female', 'donna', 'femminile', 'elsa', 'alice', 'federica', 'isabella'];
     let nonFemaleVoice = italianVoices.find(v => {
       const name = (v.name || '').toLowerCase();
       return !femaleKeywords.some(k => name.includes(k));
     });
     if (nonFemaleVoice) return nonFemaleVoice;
-
-    // Se proprio non trova nulla, restituisce la prima voce italiana
     return italianVoices[0];
   }
 
-  // Fallback: se non ci sono voci italiane, usa la lingua del browser o la prima disponibile
   let v = voices.find(v => norm(v.lang) === browserLang);
   if (!v) v = voices.find(v => norm(v.lang).split('-')[0] === baseLang);
   return v || voices.find(v => v.default) || voices[0];
@@ -1120,7 +1092,6 @@ function speakText(text, volume, onEnd) {
   utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = getBrowserSpeechLanguage(); utterance.rate = 0.95;
   
-  // Se la voce selezionata è maschile, pitch normale. Se è femminile, abbassa il pitch per farla sembrare maschile.
   const maleKeywords = ['male', 'uomo', 'maschile', 'cosimo', 'diego', 'luca', 'paolo', 'roberto', 'andrea'];
   const isMale = selectedVoice && maleKeywords.some(k => (selectedVoice.name || '').toLowerCase().includes(k));
   utterance.pitch = isMale ? 1.0 : 0.7;
@@ -1158,6 +1129,12 @@ function notice(msg) { updateStatus(msg, 'muted'); setTimeout(() => { updateMood
 
 function loadReadFile() {
   return new Promise((resolve, reject) => {
+    // Se c'è un contesto importato temporaneamente, usa quello
+    if (customAiContext !== null) {
+      resolve(customAiContext);
+      return;
+    }
+    // Altrimenti carica il file locale
     try { delete window.AUDIO_SOURGE; } catch (e) { window.AUDIO_SOURGE = undefined; }
     const sc = document.createElement('script'); sc.src = READ_FILE + '?t=' + Date.now();
     sc.onload = () => { sc.remove(); resolve(window.AUDIO_SOURGE); };
@@ -1242,7 +1219,7 @@ function onTap(e) {
 }
 document.body.addEventListener('click', onTap);
 document.body.addEventListener('touchstart', function(e) {
-  if (e.target.closest('.mobile-btn')) return; // Ignora i tocchi sui pulsanti
+  if (e.target.closest('.menu-btn') || e.target.closest('.mobile-btn') || e.target.closest('#hotkey-menu')) return;
   e.preventDefault(); const touch = e.touches[0]; onTap({ clientX: touch.clientX, clientY: touch.clientY });
 }, { passive: false });
 
@@ -1476,13 +1453,18 @@ function openAiTextInput() {
 function closeAiTextInput() { aiTextInputOpen = false; const el = document.getElementById('ai-input-wrap'); if (el) el.remove(); }
 
 // ============================================================
-// MENU SCORCIATOIE (Esc)
+// MENU & INTERFACCIA
 // ============================================================
 function updateHotkeyMenu() {
-  const set = (id, active) => { const el = document.getElementById(id); if (el) el.classList.toggle('active', !!active); };
-  set('hk-ai', aiMode && !aiWithContext); set('hk-ai-ctx', aiMode && aiWithContext); set('hk-input', aiTextInputOpen);
-  set('hk-esc', hotkeyMenuOpen); set('hk-read', readActive); set('hk-subs', subtitlesOn); set('hk-mute', muted);
-  set('hk-mic', micEnabled && micState === 'attivo'); set('hk-mic-debug', micDebug);
+  hkAi.classList.toggle('active', aiMode && !aiWithContext);
+  hkAiCtx.classList.toggle('active', aiMode && aiWithContext);
+  hkInput.classList.toggle('active', aiTextInputOpen);
+  hkRead.classList.toggle('active', readActive);
+  hkSubs.classList.toggle('active', subtitlesOn);
+  hkMute.classList.toggle('active', muted);
+  hkMic.classList.toggle('active', micEnabled && micState === 'attivo');
+  hkMicDebug.classList.toggle('active', micDebug);
+  hkImport.classList.toggle('active', customAiContext !== null);
 }
 function openHotkeyMenu() { hotkeyMenuOpen = true; updateHotkeyMenu(); hotkeyMenuEl.classList.add('show'); }
 function closeHotkeyMenu() { hotkeyMenuOpen = false; hotkeyMenuEl.classList.remove('show'); }
@@ -1492,10 +1474,42 @@ function updateMobileButtonsUI() {
   btnMobileT.classList.toggle('active', aiMode && !aiWithContext);
   btnMobileL.classList.toggle('active', readActive);
   btnMobileM.classList.toggle('active', muted);
-  btnMobileS.classList.toggle('active', subtitlesOn);
-  btnMobileN.classList.toggle('active', micEnabled && micState === 'attivo');
-  btnMobileD.classList.toggle('active', micDebug);
+  updateHotkeyMenu(); // Aggiorna anche il menu
 }
+
+// ============================================================
+// GESTIONE IMPORTAZIONE FILE
+// ============================================================
+hkImport.addEventListener('click', () => {
+  contextFileInput.click();
+});
+
+contextFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    let extracted = text;
+    // Se è un .js, prova a estrarre AUDIO_SOURGE
+    if (/\.m?js$/i.test(file.name)) {
+      try {
+        const fake = {};
+        new Function('window', text)(fake);
+        if (typeof fake.AUDIO_SOURGE === 'string') extracted = fake.AUDIO_SOURGE;
+        else if (Array.isArray(fake.AUDIO_SOURGE)) extracted = fake.AUDIO_SOURGE.join('\n\n');
+      } catch (err) { /* non estraibile, usa il testo grezzo */ }
+    }
+    customAiContext = extracted;
+    importLabel.textContent = '✅ ' + file.name;
+    importLabel.style.color = '#00ffaa';
+    notice('📖 Contesto importato: ' + file.name);
+    updateHotkeyMenu();
+    contextFileInput.value = ''; // reset
+    closeHotkeyMenu();
+  } catch (err) {
+    alert('Errore di lettura del file: ' + err.message);
+  }
+});
 
 // ============================================================
 // TASTI (Desktop)
@@ -1550,17 +1564,38 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
-// AZIONI PULSANTI MOBILE
+// AZIONI PULSANTI MENU (Click)
 // ============================================================
-document.getElementById('gear-btn').addEventListener('click', (e) => {
-  e.stopPropagation(); gearMenuEl.classList.toggle('show'); updateMobileButtonsUI();
+hkAiCtx.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && aiWithContext) exitAiMode(); else enterAiMode(true); closeHotkeyMenu(); });
+hkAi.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && !aiWithContext) exitAiMode(); else enterAiMode(false); closeHotkeyMenu(); });
+hkInput.addEventListener('click', (e) => { e.stopPropagation(); if (!aiMode) { notice('🤖 attiva prima la modalità AI'); return; } if (aiTextInputOpen) closeAiTextInput(); else openAiTextInput(); closeHotkeyMenu(); });
+hkRead.addEventListener('click', (e) => { e.stopPropagation(); if (readActive) stopReading(); else startReading(); closeHotkeyMenu(); });
+hkSubs.addEventListener('click', (e) => {
+  e.stopPropagation(); subtitlesOn = !subtitlesOn;
+  try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
+  if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+  updateStatus(subtitlesOn ? '💬 sottotitoli on' : '💬 sottotitoli off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500); closeHotkeyMenu();
 });
-document.body.addEventListener('click', (e) => {
-  if (!e.target.closest('#gear-btn') && !e.target.closest('#gear-menu')) {
-    gearMenuEl.classList.remove('show');
-  }
+hkMute.addEventListener('click', (e) => {
+  e.stopPropagation(); muted = !muted;
+  if (muted) { stopSpeaking(); updateStatus('🔇 muted', 'muted'); }
+  else { updateStatus('🔊 audio on', 'ready'); }
+  try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
+  setTimeout(() => { updateMoodUI(); }, 1500); closeHotkeyMenu();
+});
+hkMic.addEventListener('click', (e) => {
+  e.stopPropagation(); micEnabled = !micEnabled; try { localStorage.setItem('avatar_mic', micEnabled ? '1' : '0'); } catch (err) {}
+  if (micEnabled) { micAsked = false; startMic(true); } else { stopMic(); }
+  updateStatus(micEnabled ? '🎙 mic on' : '🎙 mic off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500); closeHotkeyMenu();
+});
+hkMicDebug.addEventListener('click', (e) => {
+  e.stopPropagation(); micDebug = !micDebug; updateMobileButtonsUI(); closeHotkeyMenu();
 });
 
+// ============================================================
+// AZIONI PULSANTI MOBILE (Basso)
+// ============================================================
+gearBtn.addEventListener('click', (e) => { e.stopPropagation(); if (hotkeyMenuOpen) closeHotkeyMenu(); else openHotkeyMenu(); });
 btnMobileA.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && aiWithContext) exitAiMode(); else enterAiMode(true); });
 btnMobileT.addEventListener('click', (e) => { e.stopPropagation(); if (aiMode && !aiWithContext) exitAiMode(); else enterAiMode(false); });
 btnMobileL.addEventListener('click', (e) => { e.stopPropagation(); if (readActive) stopReading(); else startReading(); });
@@ -1571,18 +1606,12 @@ btnMobileM.addEventListener('click', (e) => {
   try { localStorage.setItem('avatar_muted', muted ? '1' : '0'); } catch (err) {}
   setTimeout(() => { updateMoodUI(); }, 1500);
 });
-btnMobileS.addEventListener('click', (e) => {
-  e.stopPropagation(); subtitlesOn = !subtitlesOn; try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
-  if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
-  updateStatus(subtitlesOn ? '💬 sottotitoli on' : '💬 sottotitoli off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500); gearMenuEl.classList.remove('show');
-});
-btnMobileN.addEventListener('click', (e) => {
-  e.stopPropagation(); micEnabled = !micEnabled; try { localStorage.setItem('avatar_mic', micEnabled ? '1' : '0'); } catch (err) {}
-  if (micEnabled) { micAsked = false; startMic(true); } else { stopMic(); }
-  updateStatus(micEnabled ? '🎙 mic on' : '🎙 mic off', 'muted'); setTimeout(() => { updateMoodUI(); }, 1500); gearMenuEl.classList.remove('show');
-});
-btnMobileD.addEventListener('click', (e) => {
-  e.stopPropagation(); micDebug = !micDebug; gearMenuEl.classList.remove('show'); updateMobileButtonsUI();
+
+// Chiudi menu cliccando fuori
+document.body.addEventListener('click', (e) => {
+  if (hotkeyMenuOpen && !e.target.closest('#hotkey-menu') && !e.target.closest('#gear-btn')) {
+    closeHotkeyMenu();
+  }
 });
 
 // ============================================================
