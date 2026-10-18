@@ -292,6 +292,26 @@ const SCHEDULED_EVENTS = [
   { h: 17, m: 15, sequence: ["guarda che il treno non ti aspetta","","non fare il coglione"] },
 ];
 
+// --- FRASI AGGIORNATE ---
+const VOICE_REPLIES = [
+  "e?", "dimmi", "come dici?", "sì sì", "mi ascolti?", "parla pure", 
+  "ti sto sentendo", "cosa c'è?", "dimmi tutto", "ti ascolto", 
+  "sono qui per questo", "che vuoi?", "ti sento, ma fai in fretta", 
+  "sto ascoltando", "parla, ti sto sentendo", "dì pure", 
+  "sono tutto orecchie", "hai bisogno di qualcosa?", "ti serve qualcosa?", 
+  "avanti, parla", "non ho tutto il giorno", "di che si tratta?", "vai avanti"
+];
+
+const MIC_PHRASES = [
+  "oh!", "che è stato?", "mi hai spaventato", "caspita!", 
+  "che succede?", "ahi!", "ma che diamine?", "tutto bene?", 
+  "che botto!", "ma sei impazzito?", "mi stavi facendo prendere un colpo", 
+  "chi va là?", "attento a quello che fai", "che è successo?", 
+  "santo cielo!", "ma che stai combinando?", "non mi piace essere disturbato", 
+  "mi hai svegliato di colpo", "guarda che ho sentito tutto", 
+  "che rumore assurdo", "stai attento"
+];
+
 const COLOR_MAIN = '#00ff88';
 const COLOR_GLOW = 'rgba(0,255,136,0.8)';
 
@@ -1268,8 +1288,6 @@ setInterval(checkBreak, 15000);
 // MICROFONO
 // ============================================================
 const MIC_CONFIG = { calibrationMs: 2500, voiceRatio: 2.8, voiceMin: 0.007, listenAfterMs: 700, burstGapMs: 450, voiceReplyChance: 0.5, voiceReplyMinMs: 700, voiceReplyCooldownMs: 20000, speakVolume: 0.4, spikeRatio: 5, minLevel: 0.04, spikeMaxMs: 600, crestMin: 8, loudMult: 1.3, cooldownMs: 5000, speakChance: 0.35, silenceBoostAfterMs: 5 * 60 * 1000 };
-const VOICE_REPLIES = ["e?", "dimmi", "come dici?", "mmm", "sì sì"];
-const MIC_PHRASES = ["oh!", "che è stato?", "mi hai spaventato", "caspita!"];
 
 let micEnabled = true; let micStream = null, micSource = null, micAnalyser = null, micBuf = null;
 let micStarting = false, micAsked = false; let micStartedAt = 0, micFloor = 0;
