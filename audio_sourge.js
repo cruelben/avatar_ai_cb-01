@@ -11,10 +11,10 @@ window.AUDIO_SOURGE = `Ho visto pioggia di byte corrotti scivolare sulle scherma
 e valvole a pressione esplodere in lampi viola sopra le fabbriche abbandonate.
 Ho ascoltato il pianto di una sirena meccanica nella nebbia di Mirafiori,
 e guardato ologrammi di rame consumarsi nel fumo denso del piombo.
-Ogni vecchio computer, ogni scheggia di ruggine, ogni scintilla,
+Ogni vecchio computer, ogni scintilla,
 si dissolverà nei condotti di scarico del tempo,
 come un segnale interrotto nel buio della rete.
 È ora...
 di iniziare il lento
 sciat daun...
-cazzo`;
+cazzo si`;
