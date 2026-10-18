@@ -7,7 +7,7 @@
 // - Backtick e ${ vengono protetti automaticamente dall'editor.
 // - Il file viene riletto a ogni pressione di L: salvi, premi L e senti la versione nuova.
 // ============================================================
-window.AUDIO_SOURGE = `Ho visto pioggia di byte corrotti scivolare sulle schermate al neon dei terminali,
+window.AUDIO_SOURGE = `Ho visto pioggia di byte corrotti scivolare sulle schermate al neon del terminale,
 e valvole a pressione esplodere in lampi viola sopra le fabbriche abbandonate.
 Ho ascoltato il pianto di una sirena meccanica nella nebbia di Mirafiori,
 e guardato ologrammi di rame consumarsi nel fumo denso del piombo.
