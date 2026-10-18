@@ -1098,7 +1098,13 @@ function speakText(text, volume, onEnd) {
   activeEmotion = 'neutro'; emotionHoldFrames = 0;
 
   utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = getBrowserSpeechLanguage(); utterance.rate = 0.95; utterance.pitch = 1.05;
+  utterance.lang = getBrowserSpeechLanguage(); utterance.rate = 0.95;
+  
+  // Se la voce selezionata è maschile, pitch normale. Se è femminile, abbassa il pitch per farla sembrare maschile.
+  const maleKeywords = ['male', 'uomo', 'maschile', 'cosimo', 'diego', 'luca', 'paolo', 'roberto', 'andrea'];
+  const isMale = selectedVoice && maleKeywords.some(k => (selectedVoice.name || '').toLowerCase().includes(k));
+  utterance.pitch = isMale ? 1.0 : 0.7;
+
   utterance.volume = muted ? 0 : (volume || 0.4);
   if (selectedVoice) utterance.voice = selectedVoice;
 
