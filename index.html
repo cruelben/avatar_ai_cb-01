@@ -264,7 +264,7 @@
 <!-- Menu Unificato (ESC) -->
 <div id="hotkey-menu">
   <h3>SKIN</h3>
-  <button class="menu-btn" id="hk-skin"><span class="key">S</span><span class="label">apri selettore skin</span></button>
+  <button class="menu-btn" id="hk-skin"><span class="key">K</span><span class="label">apri selettore skin</span></button>
 
   <h3>AI PROVIDER</h3>
   <button class="menu-btn" id="hk-provider"><span class="key">G</span><span class="label" id="provider-label">Switch to Groq</span></button>
@@ -508,12 +508,10 @@ function applySkin(key) {
   currentTheme = SKINS[key].theme;
 
   if (key === 'default') {
-    // Torna all'originale: rimuove TUTTO quello che abbiamo aggiunto inline
     document.body.style.backgroundColor = '';
     document.body.style.backgroundImage = '';
     document.body.classList.remove('skin-themed');
   } else {
-    // Skin colorata: sfondo solido, classe che pulisce griglia/scanline/alone verde
     document.body.style.backgroundColor = currentTheme.bodyBg;
     document.body.style.backgroundImage = 'none';
     document.body.classList.add('skin-themed');
@@ -1627,23 +1625,19 @@ function drawAvatar() {
   updateSleepZs(cx, cy);
   const intensity = currentMood === 'sleeping' ? 0.04 : (currentMood === 'greeting' ? 0.18 : (isSpeaking ? 0.16 + mouthOpen * 0.12 : 0.075));
 
-  // Halo (canvas) — lo teniamo sempre, aiuta la profondità
   ctx.save(); ctx.translate(ox, oy);
   const halo = ctx.createRadialGradient(cx, cy, 25, cx, cy, 190 * ZOOM);
   halo.addColorStop(0, `rgba(${currentTheme.haloR},${currentTheme.haloG},${currentTheme.haloB},${intensity})`);
   halo.addColorStop(1, `rgba(${currentTheme.haloR},${currentTheme.haloG},${currentTheme.haloB},0)`);
   ctx.fillStyle = halo; ctx.fillRect(-ox, -oy, LW, LH); ctx.restore();
 
-  // Particles
   const particleIntensity = isSpeaking ? Math.min(1, 0.3 + mouthOpen * 0.7) : (currentMood === 'sleeping' ? 0.02 : (aiProcessing ? 0.18 : 0.10));
   particles.forEach(p => { p.update(particleIntensity); p.draw(); });
 
-  // Waves — solo default per non sporcare le skin colorate
   if (currentSkin === 'default') {
     ctx.save(); ctx.translate(ox, oy); drawWaves(cx, cy); ctx.restore();
   }
 
-  // FACE
   const skin = SKINS[currentSkin];
   if (skin.type === 'default') {
     drawDefaultFace(cx, cy, ox, oy);
@@ -1651,17 +1645,14 @@ function drawAvatar() {
     drawOrganicFace(skin);
   }
 
-  // Glitch — solo default
   if (currentSkin === 'default' && glitchIntensity > 0.2 && currentMood !== 'sleeping') {
     ctx.save(); ctx.globalAlpha = glitchIntensity * 0.28; ctx.fillStyle = currentTheme.main;
     for (let i = 0; i < 4; i++) { const y = Math.random() * LH; ctx.fillRect(0, y, LW, 1 + Math.random() * 3); }
     ctx.restore();
   }
 
-  // Z sleep
   ctx.save(); ctx.translate(ox, oy); drawSleepZs(); ctx.restore();
 
-  // Corners + labels
   ctx.save();
   const m = 25, l = 23, R = LW - m, B = LH - m;
   drawCyberLine(m, m + l, m, m, 0.85, currentTheme.main); drawCyberLine(m, m, m + l, m, 0.85, currentTheme.main);
@@ -2207,6 +2198,13 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 'n' && e.key !== 'N') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   micEnabled = !micEnabled; if (micEnabled) { micAsked = false; startMic(true); toast('🎙 mic on'); } else { stopMic(); toast('🎙 mic off'); }
+});
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return; if ((e.key !== 'k' && e.key !== 'K') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  e.preventDefault();
+  if (skinPanel.classList.contains('show')) { skinPanel.classList.remove('show'); return; }
+  closeHotkeyMenu();
+  skinPanel.classList.add('show');
 });
 
 // Listener: bottone SKIN nel menu ESC
