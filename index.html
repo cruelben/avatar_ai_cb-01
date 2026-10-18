@@ -1423,11 +1423,13 @@ async function enterAiMode(withContext) {
     else { aiWithContext = false; updateStatus('🤖 AI MODE — premi ← per scrivere', 'greeting'); notice('📖 audio_sourge.js non trovato, modalità senza contesto'); }
   } else { updateStatus('🤖 AI MODE — premi ← per scrivere', 'greeting'); }
   openAiTextInput();
+  updateMobileButtonsUI();
 }
 
 function exitAiMode(silent) {
   aiMode = false; aiWithContext = false; stopSpeaking(); aiTextInputOpen = false; closeAiTextInput(); aiHistory = [];
   document.body.classList.remove('ai-mode'); startMic(false); updateMoodUI(); if (!silent) notice('🤖 AI MODE off');
+  updateMobileButtonsUI();
 }
 
 function openAiTextInput() {
