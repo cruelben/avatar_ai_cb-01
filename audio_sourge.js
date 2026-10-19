@@ -7,4 +7,4 @@
 // - Backtick e ${ vengono protetti automaticamente dall'editor.
 // - Il file viene riletto a ogni pressione di L: salvi, premi L e senti la versione nuova.
 // ============================================================
-window.AUDIO_SOURGE = `ciao cacao`;
+window.AUDIO_SOURGE = `ciao`;
