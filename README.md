@@ -1,220 +1,345 @@
 # CB-01 · Desk Avatar
 
-A neon CRT-style avatar that lives on your desktop while you work. It breathes, blinks, yawns, and takes short naps. It speaks with your browser's Italian voice, reminds you to take breaks, reacts to microphone noises, and — in AI mode — answers your questions using Gemini.
+Un avatar da scrivania in stile CRT neon che vive sul tuo desktop mentre lavori. Respira, sbatte le palpebre, sbadiglia, si prende brevi pisolini. Parla con la voce italiana del browser, ti ricorda di fare le pause, reagisce ai rumori del microfono e — in modalità AI — risponde alle tue domande usando Gemini o Groq, con o senza un materiale di contesto (contratti, manuali, appunti).
 
-**Version:** v1.0.2  
+**Versione:** v1.4.0  
 **Repository:** [https://github.com/cruelben/avatar_ai_cb-01](https://github.com/cruelben/avatar_ai_cb-01)
 
 ---
 
-## What is it?
+## Cos'è
 
-CB-01 is a small HTML/JS project with no dependencies, no build step, and no server. It consists of a main file (`avatar_ai.html`), an optional text file (`audio_sourge.js`) used as the default context for AI mode, and a configuration tool.
+CB-01 è un piccolo progetto HTML/JS senza dipendenze, senza build step, senza server. È composto da:
 
-The idea is a desktop Tamagotchi: not an assistant, not a chatbot, but a presence with some personality that keeps you company while you work, reminds you to take a break, and occasionally makes fun of you.
+- **`index.html`** — l'avatar completo (canvas, voce, microfono, modalità AI, skin, master volume).
+- **`audio_sourge.js`** — file di testo di default, letto dal tasto `L` e usato come contesto dalla modalità `A`.
+- **`avatar_opzioni.html`** — editor unificato per modificare configurazione, frasi, volumi, reattività e per convertire PDF/TXT/JS in `audio_sourge.js`.
 
-Thanks to a lightweight serverless proxy (Cloudflare Workers), the avatar can safely use the Gemini API **without exposing your API key in the HTML code**. This allows you to publish the avatar on GitHub Pages without the risk of someone stealing your key.
+L'idea è un Tamagotchi da scrivania: non un assistente, non un chatbot, ma una presenza con un po' di personalità che ti tiene compagnia mentre lavori, ti ricorda di staccare e ogni tanto ti prende in giro.
 
----
-
-## Key Features
-
-**Desktop Life**
-- Breathes, blinks, yawns, sleeps for a few seconds, changes expressions.
-- Random spontaneous phrases ("I'm hungry", "what a drag", "how much longer?").
-- Reacts to microphone noises: jumps at sharp sounds, listens when you speak.
-
-**On-Canvas Controls**
-All primary interactions are drawn directly on the canvas:
-- **Left Column (Centered):** `A` (AI with context), `T` (AI without context), `L` (Read).
-- **Right Column (Centered):** `S` (Subtitles), `M` (Mute), `N` (Listen/Microphone).
-- **Top Right:** `📁 OPEN FILE` (import a custom context).
-- Every button features a small descriptive label underneath and glows when active.
-- Hovering over a button highlights it.
-
-**Voice & Reading**
-- Reads the active file (`audio_sourge.js` or imported file) out loud using the `L` button or key.
-- Uses the browser's Italian voice.
-- Volume is perfectly matched with the AI voice responses.
-
-**AI Mode**
-- `T` — generic chat, with a sarcastic and slightly "Roman" personality.
-- `A` — **context-aware** chat: the AI answers based exclusively on the content of `audio_sourge.js` (or the imported file). Neutral and professional tone.
-- While waiting for a response, the avatar assumes a "thoughtful" expression and twitches its eyebrows.
-- The text input field opens with `Backspace`/`←` or by entering AI mode.
-
-**Import Context (`📁 OPEN FILE`)**
-- Click `OPEN FILE` to load a custom `.js`, `.txt`, or `.mjs` file.
-- The imported file overrides `audio_sourge.js` for **both** the AI context (`A`) and the Reading (`L`).
-- If you click `OPEN FILE` **again** while a file is loaded (button glowing), the context is forgotten, and the avatar reverts to `audio_sourge.js`.
-
-**Break Reminders**
-- After 60 minutes of continuous work, it warns you to take a break. Then every 30 minutes, with an increasingly insistent tone.
-- Greets you when you return after an absence (standby, screen lock, inactivity).
-
-**Scheduled Messages**
-- Fixed-time phrases (lunch break, end of day, etc.) defined in `SCHEDULED_EVENTS`.
+Grazie a un proxy serverless leggero (Cloudflare Workers), l'avatar può usare l'API di Gemini **senza esporre la chiave API nel codice HTML**. Questo permette di pubblicare l'avatar su GitHub Pages senza rischi.
 
 ---
 
-## Shortcuts (Keyboard)
+## Funzionalità principali
 
-The UI is in English, but the spoken voice remains in Italian.
+### Vita da scrivania
+- Respira, sbatte le palpebre, sbadiglia, dorme per qualche secondo, cambia espressione.
+- Frasi spontanee casuali ("ho fame", "che palle", "quanto manca?").
+- Reagisce ai rumori del microfono: sobbalza ai colpi secchi, ascolta quando parli.
 
-| Key | On-Screen Equivalent | Function |
+### Controlli su canvas
+Tutte le interazioni principali sono disegnate direttamente sul canvas:
+- **Colonna sinistra (centrata):** `A` (AI con contesto), `T` (AI senza contesto), `L` (lettura).
+- **Colonna destra (centrata):** `S` (sottotitoli), `M` (mute), `N` (microfono).
+- **In alto a destra:** `📁 OPEN FILE` — importa un file di contesto (`.js`, `.txt`, `.mjs`, `.pdf`).
+- Ogni bottone ha una piccola etichetta descrittiva sotto e si illumina quando è attivo.
+- Passando il mouse sopra un bottone, questo si evidenzia.
+
+### Voce e lettura
+- Legge il file attivo (`audio_sourge.js` o file importato) ad alta voce con il tasto `L`.
+- Usa la voce italiana del browser.
+- Volume perfettamente allineato con le risposte vocali dell'AI.
+
+### Modalità AI
+- `T` — chat generica, con personalità sarcastica e un po' romana.
+- `A` — **chat con contesto**: l'AI risponde basandosi esclusivamente sul contenuto di `audio_sourge.js` (o del file importato). Tono neutro e professionale.
+- Mentre attende una risposta, l'avatar assume un'espressione "pensierosa" e muove le sopracciglia.
+- Il campo di testo si apre con `Backspace`/`←` o entrando in modalità AI.
+
+### Import contesto (`📁 OPEN FILE`)
+- Clicca `OPEN FILE` per caricare un file personalizzato: **`.js`, `.txt`, `.mjs`, `.pdf`**.
+- Il file importato **sovrascrive** `audio_sourge.js` per **entrambe** le modalità: contesto AI (`A`) e lettura (`L`).
+- I **PDF** vengono processati in-browser con `pdf.js` (caricato on-demand da CDN). Il testo estratto viene troncato a **200.000 caratteri** con toast di avviso se il PDF è più grande (per evitare di superare i limiti di contesto di Groq).
+- Se il PDF è scansionato (immagini, nessun testo estraibile), viene mostrato un avviso chiaro.
+- Se clicchi `OPEN FILE` **di nuovo** mentre un file è caricato (bottone illuminato), il contesto viene dimenticato e l'avatar torna a `audio_sourge.js`.
+
+### Master volume (tasto `V`)
+- Overlay con slider unico (0–150%) che regola **in tempo reale** i volumi delle tre modalità vocali: **A**, **T**, **L**.
+- Muovendo lo slider **mentre l'avatar parla**, la frase in corso **riparte dalla parola corrente** con il nuovo volume (limite tecnico di Web Speech API: non si può cambiare volume a un'utterance già in corso; la ripartenza è la migliore approssimazione possibile).
+- Il valore del master viene **persistito in `localStorage`**: al reload resta quello impostato.
+- Tasto `R` per reset rapido a 100%.
+- Voce `V` anche nel menu `Esc`.
+
+### Promemoria pause
+- Dopo 60 minuti di lavoro continuo avvisa di fare una pausa. Poi ogni 30 minuti, con tono sempre più insistente.
+- Ti saluta quando torni dopo un'assenza (standby, blocco schermo, inattività).
+
+### Messaggi schedulati
+- Frasi a orari fissi (pausa pranzo, fine giornata, ecc.) definite in `SCHEDULED_EVENTS`.
+
+### Skin
+- 16 skin disponibili (1 originale wireframe verde + 15 organiche: ameba, medusa, pelosetto, spora, polpetto, germoglio, lucciola, stella, vortice, nuvola, axolotl, goccia, lava, cristallo, camaleonte).
+- Selettore con `K` o dal menu `Esc`.
+
+---
+
+## Scorciatoie (tastiera)
+
+L'interfaccia è in inglese, ma la voce parlata resta in italiano.
+
+| Tasto | Equivalente su schermo | Funzione |
 |---|---|---|
-| Tap / click | — | Greets, unlocks audio, wakes the avatar (only outside AI mode) |
-| `A` | Canvas `A` | AI Mode **with context** |
-| `T` | Canvas `T` | AI Mode **without context** |
-| `Backspace` / `←` | — | Enters `T` mode and opens the text field (if not already in AI mode). Toggles the field if already in AI mode. |
-| `Esc` | — | Closes the text field; if closed, opens the minimal shortcut menu. |
-| `L` | Canvas `L` | Reads/interrupts the active file out loud (does not stop AI mode). |
-| `S` | Canvas `S` | Subtitles on/off. |
-| `M` | Canvas `M` | Total audio mute (starts **unmuted** by default). |
-| `N` | Canvas `N` | Reactive microphone on/off (starts **off** by default). |
-| `D` | Inside ESC Menu | Shows/hides the microphone debug meter. |
+| Tap / click | — | Saluta, sblocca l'audio, sveglia l'avatar (solo fuori modalità AI) |
+| `A` | Canvas `A` | Modalità AI **con contesto** |
+| `T` | Canvas `T` | Modalità AI **senza contesto** |
+| `Backspace` / `←` | — | Entra in modalità `T` e apre il campo di testo (se non già in AI). Se già in AI, mostra/nasconde il campo. |
+| `V` | Canvas (overlay) | Apre/chiude il master volume A/T/L |
+| `R` | — | Reset master volume a 100% |
+| `Esc` | — | Chiude il campo di testo; se chiuso, apre il menu scorciatoie |
+| `L` | Canvas `L` | Legge/interrompe il file attivo ad alta voce (non ferma la modalità AI) |
+| `S` | Canvas `S` | Sottotitoli on/off (partono **sempre spenti** all'avvio) |
+| `M` | Canvas `M` | Mute audio totale (parte **smutato** di default) |
+| `N` | Canvas `N` | Microfono reattivo on/off (parte **spento** di default) |
+| `D` | Menu `Esc` | Mostra/nasconde il misuratore di debug del microfono |
+| `K` | Menu `Esc` | Apre il selettore skin |
+| `G` | Menu `Esc` | Cambia provider AI (Gemini ↔ Groq) |
 
 ---
 
-## The ESC Menu
+## Il menu `Esc`
 
-Press `Esc` to open a minimal menu containing:
-- **Debug Mic (D)**: Toggles the microphone debug overlay.
-- **Version**: Displays the current build version (e.g., v1.0.2).
-- **GitHub Link**: Direct link to the repository.
-
----
-
-## Requirements
-
-- **Chrome or Edge** (recommended). Firefox does not support the Web Speech API for voice recognition.
-- A **Google Gemini API key** for AI mode.
-- A free **Cloudflare** account (for the proxy).
-- For the reactive microphone: open the file from `https://` or `http://localhost`. From `file://`, Chrome asks for microphone permission on every reload.
+Premi `Esc` per aprire un menu minimale con:
+- **Skin (`K`)**: apre il selettore skin.
+- **Volume (`V`)**: apre il master volume A/T/L.
+- **AI Provider (`G`)**: cambia provider (Gemini ↔ Groq).
+- **Debug Mic (`D`)**: mostra/nasconde il misuratore del microfono.
+- **Versione**: mostra la versione corrente.
+- **Link GitHub**: link diretto al repository.
 
 ---
 
-## API Architecture (Cloudflare Proxy)
+## Requisiti
 
-To avoid exposing your API key in the HTML code, the project uses a proxy on Cloudflare Workers.
+- **Chrome o Edge** (consigliati). Firefox non supporta la Web Speech API per il riconoscimento vocale.
+- Una **chiave API di Google Gemini** per la modalità AI (o una chiave Groq, se preferisci).
+- Un account **Cloudflare** gratuito (per il proxy).
+- Per il microfono reattivo: apri il file da `https://` o `http://localhost`. Da `file://` Chrome chiede il permesso del microfono a ogni reload.
 
-**How it works:**
-1. Your avatar sends the question to your Cloudflare Worker (e.g., `https://cb01-proxy.yourname.workers.dev`).
-2. The Worker adds your secret API key (securely stored on Cloudflare) and forwards it to Google (Gemini).
-3. The provider processes the response, sends it back to the Worker, which forwards it to your avatar.
+---
 
-### How to set up the Cloudflare proxy
+## Architettura API (proxy Cloudflare)
 
-1. **Create an account** at [Cloudflare](https://dash.cloudflare.com).
-2. Go to **Workers & Pages** and click **Create application** > **Create Worker**.
-3. Name your Worker (e.g., `cb01-proxy`) and click **Deploy**.
-4. Click **Edit code**, paste the Worker code, and click **Save and Deploy**.
-5. Go to **Settings** > **Variables and Secrets**.
-6. Add your **Secret**:
-   - **Variable name**: `GEMINI_API_KEY`
-   - **Secret value**: your Gemini API key
-7. Copy your Worker URL and paste it into `avatar_ai.html` at line:
+Per evitare di esporre la chiave API nel codice HTML, il progetto usa un proxy su Cloudflare Workers.
+
+**Come funziona:**
+1. L'avatar invia la domanda al tuo Worker Cloudflare (es. `https://cb01-proxy.tuonome.workers.dev`).
+2. Il Worker aggiunge la chiave API segreta (salvata su Cloudflare) e la inoltra a Google (Gemini) o Groq.
+3. Il provider elabora la risposta, la restituisce al Worker, che la inoltra all'avatar.
+
+### Come configurare il proxy Cloudflare
+
+1. **Crea un account** su [Cloudflare](https://dash.cloudflare.com).
+2. Vai su **Workers & Pages** e clicca **Create application** > **Create Worker**.
+3. Dai un nome al Worker (es. `cb01-proxy`) e clicca **Deploy**.
+4. Clicca **Edit code**, incolla il codice del Worker e clicca **Save and Deploy**.
+5. Vai su **Settings** > **Variables and Secrets**.
+6. Aggiungi il tuo **Secret**:
+   - **Nome variabile**: `GEMINI_API_KEY` (e/o `GROQ_API_KEY`)
+   - **Valore**: la tua chiave API
+7. Copia l'URL del Worker e incollalo in `index.html` alla riga:
    ```js
-   const PROXY_BASE_URL = 'https://cb01-proxy.yourname.workers.dev';
+   const PROXY_BASE_URL = 'https://cb01-proxy.tuonome.workers.dev';
    ```
 
 ---
 
-## Installation (Local or GitHub)
+## Installazione (locale o GitHub)
 
-1. **Download the files** (or clone the repo):
+1. **Scarica i file** (o clona il repo):
    ```text
    git clone https://github.com/cruelben/avatar_ai_cb-01.git
    cd avatar_ai_cb-01
    ```
 
-2. **Configure the avatar**: open `avatar_ai.html` and make sure `PROXY_BASE_URL` points to your Cloudflare Worker.
+2. **Configura l'avatar**: apri `index.html` e assicurati che `PROXY_BASE_URL` punti al tuo Worker Cloudflare.
 
-3. **Open the file** with Chrome or Edge. Tap once to unlock audio. Try out the on-canvas buttons.
-
----
-
-## How to prepare content for AI Mode (A) and Reading (L)
-
-By default, the avatar reads and uses `audio_sourge.js` as its knowledge base. You can put anything in there: a manual, notes, a technical spec, or text you want to consult by voice.
-
-**Simplest way:** open `audio_sourge.js` with a text editor and write the content between the backticks:
-```js
-window.AUDIO_SOURGE = `Here goes your text.
-
-An empty line = new paragraph.
-`;
-```
-
-**Alternative (On-the-fly):** Click the `📁 OPEN FILE` button on the canvas. Select any `.txt` or `.js` file from your computer. The avatar will immediately use this new file for both `A` and `L`. Click the glowing button again to clear the imported file.
+3. **Apri il file** con Chrome o Edge. Tocca una volta per sbloccare l'audio. Prova i bottoni sul canvas.
 
 ---
 
-## The Options Tool (`avatar_opzioni_6.html`)
+## Come preparare il contenuto per modalità AI (A) e Lettura (L)
 
-This is a unified editor that lets you modify the avatar without touching the code manually. It has three tabs:
-- **📅 Schedule & Phrases** — scheduled messages, reactive sound phrases, and voice reply phrases.
-- **🔊 Audio & Reactivity** — voice and sound volumes, microphone thresholds.
-- **📖 Audio Source Editor** — the text of `audio_sourge.js`.
+### Caso 1 — Contesto fisso permanente (`audio_sourge.js`)
 
-Open the tool, load `avatar_ai.html`, make your changes, click "💾 GENERA INDEX.HTML", and you'll get a new file with the modifications.
+Se hai un documento che vuoi usare **sempre** come contesto di default (es. il tuo contratto di lavoro, un manuale, un volantino):
+
+1. Apri `avatar_opzioni.html`.
+2. Vai nella scheda **📖 AUDIO SOURCE EDITOR**.
+3. Clicca `📁 APRI FILE (.TXT, .JS, .PDF)` e seleziona il tuo file.
+4. Se è un PDF, il testo viene estratto automaticamente con `pdf.js`.
+5. (Opzionale) attiva "Tronca PDF a N caratteri" se il PDF è molto grande.
+6. Clicca `💾 ESPORTA COME audio_sourge.js`.
+7. Metti il file `audio_sourge.js` nella **stessa cartella** di `index.html`.
+
+Da quel momento in poi, `A` e `L` useranno quel testo automaticamente, senza doverlo importare ogni volta. Funziona anche da `file://` (doppio click sull'HTML).
+
+### Caso 2 — Import temporaneo (`📁 OPEN FILE`)
+
+Se vuoi usare un documento **al volo**, senza convertirlo:
+
+1. Apri `index.html`.
+2. Clicca `📁 OPEN FILE` (in alto a destra sul canvas).
+3. Seleziona un file **`.js`, `.txt`, `.mjs`, `.pdf`**.
+4. Il testo viene estratto (per i PDF, in-browser con `pdf.js`) e diventa il contesto per `A` e `L`.
+5. Clicca di nuovo `OPEN FILE` (bottone illuminato) per tornare a `audio_sourge.js`.
+
+### Formati supportati per l'import
+
+| Formato | Contesto A | Lettura L | Note |
+|---|---|---|---|
+| **`.txt`** | ✅ | ✅ | Testo puro, caso d'uso principale |
+| **`.md`** | ✅ | ✅ | Markdown (i simboli vengono letti, sconsigliato per L) |
+| **`.js` / `.mjs`** | ✅ | ✅ | Se contiene `window.AUDIO_SOURGE = \`...\``, estrae solo il testo |
+| **`.pdf`** | ✅ | ✅ | Estratto in-browser con `pdf.js`. Troncato a 200.000 caratteri in import runtime. PDF scansionati non supportati (servirebbe OCR) |
+
+**Formati non supportati:** `.docx`, `.epub`, `.xlsx`, immagini, audio, video, archivi. Per questi servirebbe una libreria di estrazione dedicata (mammoth.js, epub.js, SheetJS) oppure OCR (`tesseract.js`).
 
 ---
 
-## Customization
+## Lo strumento opzioni (`avatar_opzioni.html`)
 
-**Changing the chat personality (T mode).** In `avatar_ai.html`, search for:
+È un editor unificato che permette di modificare l'avatar senza toccare il codice manualmente. Ha tre schede:
+
+### 📅 Schedule & Phrases
+- Eventi schedulati (orari, testo o sequenza, volume normale/sottovoce, attivo/inattivo).
+- Frasi di risposta vocale (`VOICE_REPLIES`).
+- Reazioni ai rumori secchi (`MIC_PHRASES`).
+- Pulsante `▶ Prova` per ascoltare ogni frase con la voce italiana.
+
+### 🔊 Audio & Reactivity
+- **Volumi voci A · T · L** (`SPEECH_VOLUME_CONFIG`): i default delle tre modalità vocali, che nell'avatar vengono scalati dal master volume (`V`).
+- Altri volumi voce (messaggi schedulati, frasi spontanee, sottovoce, risposte ai rumori).
+- Suoni elettronici (saluto, sbadiglio, cinguettio) + interruttore generale.
+- Soglie di reattività del microfono (voce prolungata e colpi secchi).
+- Profili rapidi: "Solo colpi forti", "Calmo", "Normale", "Sensibile".
+
+### 📖 Audio Source Editor
+- Editor del testo che l'avatar legge con `L` (e usa come contesto con `A`).
+- **Accetta `.txt`, `.js`, `.mjs`, `.pdf`**.
+- Per i PDF: estrazione testo in-browser con `pdf.js` (CDN pinnato).
+- **Opzione "Tronca PDF a N caratteri"**: spenta di default (testo integrale), attivabile se vuoi limitare la lunghezza.
+- **Avviso chiaro** se il PDF non contiene testo estraibile (scansionato, protetto).
+- Contatore caratteri in tempo reale.
+- Esporta sempre come `audio_sourge.js` nel formato corretto (`window.AUDIO_SOURGE = \`...\`;`).
+
+### Flusso tipico con l'editor
+1. Apri `avatar_opzioni.html`.
+2. Clicca `📁 APRI INDEX.HTML` e seleziona il tuo `index.html`.
+3. Modifica quello che ti serve nelle tre schede.
+4. Clicca `💾 GENERA INDEX.HTML` per salvare l'avatar aggiornato.
+5. Se hai modificato la scheda Source, clicca `💾 ESPORTA COME audio_sourge.js` per salvare il file di testo.
+
+---
+
+## Personalizzazione
+
+### Cambiare la personalità della chat (modalità T)
+In `index.html`, cerca:
 ```js
 const GEMINI_SYSTEM_PROMPT = "Sei CB-01, un avatar da scrivania sarcastico...";
 ```
 
-**Changing the voice tone.** Search for `utterance.rate` and `utterance.pitch` inside `speakText`.
+### Cambiare il tono della voce
+Cerca `utterance.rate` e `utterance.pitch` dentro `speakText`.
 
-**Changing the AI model.** Search for:
+### Cambiare il modello AI
+Cerca:
 ```js
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 ```
-*(Model names change frequently: if you get an error, update this value).*
+*(I nomi dei modelli cambiano spesso: se ricevi un errore, aggiorna questo valore).*
 
-**Canvas Button Layout.** Search for `BTN_LAYOUT` in the JavaScript to adjust button sizes, margins, and gaps.
+### Layout dei bottoni sul canvas
+Cerca `BTN_LAYOUT` nel JavaScript per regolare dimensioni, margini e spaziature.
+
+### Volumi base A / T / L
+Cerca:
+```js
+const SPEECH_VOLUME_CONFIG = {
+  aiContextVolume: 0.9,
+  aiNoContextVolume: 0.9,
+  readVolume: 0.85
+};
+```
+Oppure modificali dall'editor `avatar_opzioni.html` (scheda **🔊 Audio**).
+
+### Master volume iniziale
+Il master volume è **runtime** e persistito in `localStorage['avatar_master_vol']`. Non è scritto nel file. Se vuoi cambiare il default iniziale, modifica:
+```js
+let masterVolume = 1.0;
+```
 
 ---
 
-## Publishing on GitHub Pages
+## Pubblicazione su GitHub Pages
 
-Now that the API keys are safely stored on Cloudflare, **you can publish your avatar on GitHub Pages with total peace of mind**. The HTML file contains no secrets.
+Ora che le chiavi API sono al sicuro su Cloudflare, **puoi pubblicare il tuo avatar su GitHub Pages in totale tranquillità**. Il file HTML non contiene segreti.
 
-**Repository structure:**
+**Struttura del repository:**
 ```text
 avatar_ai_cb-01/
-├── avatar_ai.html          # the complete avatar (without API keys)
-├── audio_sourge.js         # default text for AI mode and the L key
-├── avatar_opzioni_6.html   # configuration editor (optional)
-└── README.md               # this file
+├── index.html              # l'avatar completo (senza chiavi API)
+├── audio_sourge.js         # testo di default per la modalità AI e il tasto L
+├── avatar_opzioni.html     # editor di configurazione (opzionale)
+└── README.md               # questo file
 ```
 
----
-
-## Technical Notes
-
-- **Canvas 2D** for drawing both the avatar and the interactive UI buttons.
-- **Web Audio API** for electronic sounds (greeting, yawn).
-- **speechSynthesis** for the Italian voice.
-- **getUserMedia + AnalyserNode** for the reactive microphone (local volume analysis, no audio recorded).
-- **Idle Detection API** (Chromium only) to detect breaks.
-- **Gemini API** for AI mode, via Cloudflare proxy.
-- **localStorage** to remember preferences (subtitles, microphone), but **Mute is always disabled on reload** to prevent accidental silent starts.
+**Nota importante:** se importi PDF in `index.html` o in `avatar_opzioni.html`, la prima volta il browser scarica `pdf.js` da `cdn.jsdelivr.net` (~1.3 MB). Dopo è in cache. Il testo del PDF non esce mai dal browser.
 
 ---
 
-## What it does NOT do
+## Note tecniche
 
-- **Does not record** your voice. The reactive microphone only measures volume.
-- **Does not spy on you**. Everything runs in your browser and on your personal proxy.
-- **Does not replace an assistant**. It is a decorative avatar.
+- **Canvas 2D** per disegnare sia l'avatar sia i bottoni interattivi dell'interfaccia.
+- **Web Audio API** per i suoni elettronici (saluto, sbadiglio).
+- **speechSynthesis** per la voce italiana.
+- **getUserMedia + AnalyserNode** per il microfono reattivo (analisi locale del volume, nessuna registrazione).
+- **Idle Detection API** (solo Chromium) per rilevare le pause.
+- **Gemini API / Groq API** per la modalità AI, via proxy Cloudflare.
+- **pdf.js** (CDN jsDelivr, pinnato a `4.0.379`) per estrarre testo dai PDF, caricato lazy solo al primo PDF.
+- **localStorage** per ricordare:
+  - master volume (`avatar_master_vol`, persistito)
+  - microfono (`avatar_mic`, persistito)
+  - mute (`avatar_muted`, **sempre rimosso all'avvio**: parte smutato)
+  - sottotitoli (`avatar_subs`, **sempre rimosso all'avvio**: partono spenti)
 
 ---
 
-## License
+## Cosa NON fa
 
-MIT — do whatever you want with it, I take no responsibility.
+- **Non registra** la tua voce. Il microfono reattivo misura solo il volume.
+- **Non spia**. Tutto gira nel tuo browser e sul tuo proxy personale.
+- **Non sostituisce un assistente**. È un avatar decorativo.
+- **Non legge PDF scansionati** (immagini). Per quelli servirebbe un OCR, non supportato.
+
+---
+
+## Risoluzione problemi
+
+### "📖 audio_sourge.js not found"
+- Assicurati che `audio_sourge.js` sia nella **stessa cartella** di `index.html`.
+- Il nome deve essere esattamente `audio_sourge.js` (tutto minuscolo).
+
+### Il PDF non viene letto
+- Verifica che sia un PDF **di testo** (non scansionato). Se apri il PDF e puoi selezionare il testo con il mouse, va bene.
+- Se il PDF è enorme (>200k caratteri), viene troncato in import runtime con toast di avviso.
+
+### Il microfono non funziona
+- Apri il file da `https://` o `http://localhost`. Da `file://` Chrome chiede il permesso a ogni reload.
+- Premi `D` per vedere il misuratore di debug: se il livello è sempre 0, il microfono non è attivo.
+
+### L'AI non risponde
+- Verifica che `PROXY_BASE_URL` in `index.html` punti al tuo Worker Cloudflare.
+- Verifica che la chiave API sia configurata come Secret sul Worker.
+- Apri la console del browser (F12) per vedere l'errore esatto.
+
+### Il master volume non cambia il volume mentre parla
+- È un limite tecnico di Web Speech API: non si può cambiare `utterance.volume` a un'utterance già in corso. La ripartenza dalla parola corrente è la migliore approssimazione possibile. Funziona bene su frasi lunghe (>400ms trascorsi, >15 caratteri rimasti).
+
+---
+
+## Licenza
+
+MIT — fai quello che vuoi, non mi assumo nessuna responsabilità.
