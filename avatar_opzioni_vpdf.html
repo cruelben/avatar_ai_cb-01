@@ -1,0 +1,2155 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Avatar Opzioni</title>
+<style>
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden}body{background:#000d06;color:#00ff88;font-family:'Courier New',monospace}.shell{height:100%;display:flex;flex-direction:column}header{text-align:center;padding:12px;border-bottom:1px solid #063}h1{font-size:22px;letter-spacing:4px;margin:0 0 4px}.sub{font-size:11px;color:#00cc66}.tabs,.shared{display:flex;gap:8px;padding:9px 12px;background:#00160c;border-bottom:1px solid #063;align-items:center;flex-wrap:wrap}.tab,.pick,.save{color:#00ff88;background:#002414;border:1px solid #00aa66;border-radius:7px;padding:9px 12px;font:inherit;font-size:11px;cursor:pointer}.tab{flex:1}.tab.active{background:#064526;border-color:#00ff88}.sharedname{flex:1;font-size:11px;color:#00cc66}.save:disabled{opacity:.35}.workspace{position:relative;flex:1;min-height:0}.panel{position:absolute;inset:0;display:none}.panel.active{display:block}iframe{width:100%;height:100%;border:0;background:#000d06}.source-note{font-size:10px;color:#00aa66}.landing{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding-top:70px;background:#000d06;z-index:20}.landing-box{width:min(760px,calc(100% - 32px));padding:48px 24px;text-align:center;border:1px solid rgba(0,255,157,.32);border-radius:12px;background:rgba(0,255,157,.035);box-shadow:0 0 30px rgba(0,255,157,.07),inset 0 0 40px rgba(0,255,157,.03)}.landing-title{margin-bottom:18px;font-size:14px;letter-spacing:1px}.landing-pick{display:inline-block;padding:14px 32px;border:1px solid #00ff88;border-radius:8px;background:rgba(0,255,136,.09);color:#00ff88;font:inherit;font-size:14px;letter-spacing:2px;cursor:pointer;text-transform:uppercase}.landing-pick:hover{background:rgba(0,255,136,.18);box-shadow:0 0 20px rgba(0,255,136,.3)}.landing-hint{margin-top:18px;font-size:11px;letter-spacing:1px;opacity:.62}.shared.before-load{display:none}.landing[hidden]{display:none!important}.warnbar{display:none;padding:7px 14px;background:rgba(255,180,0,.12);color:#ffcc55;border-bottom:1px solid rgba(255,180,0,.35);font-size:11px;letter-spacing:1px}.warnbar.show{display:block}.warnbar b{color:#ffdd88}.shared .reloadcur{color:#00ff88;background:#002414;border:1px solid #00aa66;border-radius:7px;padding:9px 12px;font:inherit;font-size:11px;cursor:pointer}.shared .reloadcur:hover{background:#064526}@media(max-width:650px){h1{font-size:17px}.tab{font-size:9px;padding:8px 4px}.sharedname{width:100%;flex-basis:100%}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header><h1>◈ AVATAR OPZIONI ◈</h1><div class="sub">GESTIONE UNIFICATA DEL FILE AVATAR</div></header>
+<nav class="tabs">
+  <button class="tab" data-tab="schedule">📅 SCHEDULE E FRASI</button>
+  <button class="tab" data-tab="audio">🔊 AUDIO E REATTIVITÀ</button>
+  <button class="tab" data-tab="source">📖 AUDIO SOURCE EDITOR</button>
+</nav>
+<div class="warnbar" id="warnBar"></div>
+<div class="shared before-load" id="sharedBar">
+  <label class="pick">📁 APRI INDEX.HTML<input id="avatarFile" type="file" accept=".html,.htm" hidden></label>
+  <button class="reloadcur" id="reloadCurrent" title="Ricarica il file già caricato nelle schede">↻ Ricarica avatar corrente</button>
+  <span class="sharedname" id="status">Nessun avatar caricato</span>
+  <button class="save" id="saveAll" disabled>💾 GENERA INDEX.HTML</button>
+</div>
+<main class="workspace">
+  <section class="landing" id="landing">
+    <div class="landing-box">
+      <div class="landing-title">Carica il file dell'avatar da modificare</div>
+      <label class="landing-pick">📁 APRI INDEX.HTML<input id="landingFile" type="file" accept=".html,.htm" hidden></label>
+      <div class="landing-hint">Il file verrà caricato automaticamente in Schedule e Frasi e in Audio e Reattività.</div>
+    </div>
+  </section>
+  <section class="panel" id="p-schedule"><iframe id="f-schedule"></iframe></section>
+  <section class="panel" id="p-audio"><iframe id="f-audio"></iframe></section>
+  <section class="panel" id="p-source"><iframe id="f-source"></iframe></section>
+</main>
+</div>
+
+<!-- ============================================================
+     SCHEDE INCORPORATE (leggibili)
+     Il contenuto di queste textarea viene passato agli iframe
+     tramite srcdoc. Niente base64: puoi modificarle a mano.
+     NOTA: ogni </textarea> interno è scritto come <\/textarea>
+     per non chiudere prematuramente il contenitore.
+     ============================================================ -->
+
+<textarea id="src-schedule" hidden>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule & Phrases Editor — Avatar</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    background-color: #000d06;
+    color: #00ff88;
+    font-family: 'Courier New', Courier, monospace;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(0,255,136,0.08) 0%, transparent 60%),
+      linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    padding: 24px 16px 60px;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header { text-align: center; margin-bottom: 24px; }
+  h1 {
+    font-size: clamp(18px, 3vw, 26px);
+    letter-spacing: 4px;
+    text-shadow: 0 0 14px rgba(0,255,136,0.7);
+    margin-bottom: 6px;
+  }
+  .sub { color: #00cc66; font-size: 12px; letter-spacing: 2px; opacity: 0.75; }
+
+  main { max-width: 900px; margin: 0 auto; }
+
+  .loader {
+    border: 1px solid rgba(0,255,157,0.3);
+    border-radius: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    background: rgba(0,255,157,0.03);
+    box-shadow: 0 0 30px rgba(0,255,157,0.06), inset 0 0 40px rgba(0,255,157,0.03);
+  }
+  .loader p { margin-bottom: 16px; font-size: 14px; letter-spacing: 1px; }
+  .loader .hint { font-size: 11px; opacity: 0.6; margin-top: 18px; letter-spacing: 1px; }
+  .loader code { background: rgba(0,255,136,0.1); padding: 2px 6px; border-radius: 4px; color: #00ffaa; }
+
+  .file-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    border: 1px solid #00ff88;
+    border-radius: 8px;
+    color: #00ff88;
+    background: rgba(0,255,136,0.08);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+  .file-btn:hover { background: rgba(0,255,136,0.18); box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: rgba(0,255,157,0.03);
+    border: 1px solid rgba(0,255,157,0.25);
+    color: #00cc66;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: rgba(0,255,136,0.15);
+    border-color: #00ff88;
+    color: #00ff88;
+    box-shadow: 0 0 15px rgba(0,255,136,0.2);
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border: 1px solid rgba(0,255,157,0.2);
+    border-radius: 10px;
+    background: rgba(0,255,157,0.03);
+    flex-wrap: wrap;
+  }
+  .toolbar .filename { flex: 1; font-size: 12px; letter-spacing: 1px; opacity: 0.85; min-width: 140px; }
+
+  button {
+    font-family: inherit;
+    background: transparent;
+    color: #00ff88;
+    border: 1px solid rgba(0,255,136,0.45);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  button:hover {
+    background: rgba(0,255,136,0.12);
+    border-color: #00ff88;
+    box-shadow: 0 0 12px rgba(0,255,136,0.3);
+  }
+  button:active { transform: scale(0.97); }
+
+  .editor-section { display: none; }
+  .editor-section.active { display: block; }
+
+  .event-card, .phrase-card {
+    border: 1px solid rgba(0,255,157,0.22);
+    border-radius: 10px;
+    background: rgba(0,255,157,0.03);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    transition: all 0.25s;
+    box-shadow: 0 0 18px rgba(0,255,157,0.04);
+  }
+  .event-card.inactive {
+    opacity: 0.4;
+    border-color: rgba(0,255,157,0.1);
+    background: rgba(0,255,157,0.01);
+  }
+
+  .phrase-card { display: flex; align-items: center; gap: 10px; }
+  .phrase-card input[type="text"] { flex: 1; }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row.top { margin-bottom: 10px; }
+
+  input[type="time"],
+  input[type="text"],
+  select,
+  textarea {
+    font-family: inherit;
+    background: rgba(0,0,0,0.4);
+    color: #00ff88;
+    border: 1px solid rgba(0,255,157,0.3);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 13px;
+    outline: none;
+    transition: all 0.15s;
+  }
+  input[type="time"]:focus,
+  input[type="text"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0,255,136,0.35);
+  }
+  input[type="time"] {
+    width: 100px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.9) sepia(1) hue-rotate(80deg) saturate(4);
+    cursor: pointer;
+  }
+  select {
+    cursor: pointer;
+    padding-right: 26px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z' fill='%2300ff88'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  textarea { width: 100%; resize: vertical; line-height: 1.5; min-height: 70px; }
+  input[type="text"].text-input { width: 100%; font-size: 14px; }
+
+  .toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    user-select: none;
+    padding: 6px 10px;
+    border: 1px solid rgba(0,255,157,0.25);
+    border-radius: 6px;
+    margin-left: auto;
+  }
+  .toggle input { accent-color: #00ff88; cursor: pointer; }
+  .toggle:hover { border-color: rgba(0,255,157,0.5); }
+
+  .delete-btn {
+    border-color: rgba(255,80,80,0.5);
+    color: #ff8888;
+    padding: 7px 10px;
+  }
+  .delete-btn:hover {
+    background: rgba(255,80,80,0.15);
+    border-color: #ff5555;
+    box-shadow: 0 0 12px rgba(255,80,80,0.3);
+  }
+
+  .hint { font-size: 10px; opacity: 0.5; letter-spacing: 1px; margin-top: 6px; }
+  .empty { text-align: center; padding: 30px; opacity: 0.5; letter-spacing: 2px; font-size: 12px; }
+
+  .subheading {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #00cc66;
+    margin: 20px 0 10px;
+    text-transform: uppercase;
+  }
+
+  .output {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid rgba(0,255,157,0.3);
+    border-radius: 10px;
+    background: rgba(0,255,157,0.05);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .output label { font-size: 12px; letter-spacing: 2px; color: #00cc66; }
+  .output input[type="text"] { flex: 1; min-width: 180px; font-size: 13px; }
+  #generateBtn {
+    background: rgba(0,255,136,0.15);
+    border-color: #00ff88;
+    padding: 10px 22px;
+    font-size: 13px;
+  }
+  #generateBtn:hover { background: rgba(0,255,136,0.28); box-shadow: 0 0 22px rgba(0,255,136,0.5); }
+
+  .flash {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0,30,15,0.95);
+    color: #00ff88;
+    padding: 12px 28px;
+    border: 1px solid #00ff88;
+    border-radius: 8px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    box-shadow: 0 0 30px rgba(0,255,136,0.4);
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .flash.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 600px) {
+    .row.top { gap: 6px; }
+    input[type="time"] { width: 90px; }
+    .toggle { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>◈ SCHEDULE & PHRASES EDITOR ◈</h1>
+  <p class="sub">GESTIONE EVENTI E RISPOSTE VOCALI — DESK AVATAR</p>
+</header>
+
+<main>
+  <section class="loader" id="loader">
+    <p>Carica un file avatar HTML per iniziare</p>
+    <label class="file-btn">
+      <input type="file" accept=".html,.htm" id="fileInput" hidden>
+      📁 SCEGLI FILE
+    </label>
+    <p class="hint">Il file deve contenere <code>SCHEDULED_EVENTS</code>, <code>VOICE_REPLIES</code> e <code>MIC_PHRASES</code></p>
+  </section>
+
+  <section id="editor" hidden>
+    <div class="toolbar">
+      <span class="filename" id="loadedName">—</span>
+      <button id="reloadBtn">↻ Ricarica</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-target="sectionEvents">📅 Eventi Orari</button>
+      <button class="tab-btn" data-target="sectionPhrases">💬 Frasi Casuali</button>
+    </div>
+
+    <div id="sectionEvents" class="editor-section active">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="subheading" style="margin: 0;">Lista Eventi Programmato</span>
+        <button id="addEventBtn">+ Nuovo evento</button>
+      </div>
+      <div id="eventsList"></div>
+    </div>
+
+    <div id="sectionPhrases" class="editor-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span class="subheading" style="margin: 0;">Voice Replies (Risposte alla voce)</span>
+        <button id="addVoiceBtn">+ Aggiungi risposta</button>
+      </div>
+      <div id="voiceList"></div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin: 24px 0 12px;">
+        <span class="subheading" style="margin: 0;">Mic Phrases (Reazioni a rumori secchi)</span>
+        <button id="addMicBtn">+ Aggiungi reazione</button>
+      </div>
+      <div id="micList"></div>
+    </div>
+
+    <div class="output">
+      <label for="filenameInput">SALVA COME:</label>
+      <input type="text" id="filenameInput" value="index02.html">
+      <button id="generateBtn">💾 GENERA FILE</button>
+    </div>
+  </section>
+</main>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let currentHtml = '';
+let currentFilename = '';
+let events = [];
+let voiceReplies = [];
+let micPhrases = [];
+
+// ============================================================
+// SPEECH SYNTHESIS HELPER
+// ============================================================
+function speakText(text, volume = 'normal') {
+  if (!('speechSynthesis' in window)) {
+    alert('La sintesi vocale non è supportata da questo browser.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = 'it-IT';
+  utterance.volume = (volume === 'low') ? 0.35 : 1.0;
+  const voices = window.speechSynthesis.getVoices();
+  const italianVoice = voices.find(v => v.lang.startsWith('it'));
+  if (italianVoice) utterance.voice = italianVoice;
+  window.speechSynthesis.speak(utterance);
+}
+
+function playSequence(sequenceLines, volume = 'normal') {
+  if (!Array.isArray(sequenceLines) || sequenceLines.length === 0) return;
+  const validLines = sequenceLines.filter(l => l && l.trim().length > 0);
+  if (validLines.length === 0) return;
+  if (!('speechSynthesis' in window)) {
+    alert('La sintesi vocale non è supportata da questo browser.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const voices = window.speechSynthesis.getVoices();
+  const italianVoice = voices.find(v => v.lang.startsWith('it'));
+  validLines.forEach(line => {
+    const utterance = new SpeechSynthesisUtterance(line);
+    utterance.lang = 'it-IT';
+    utterance.volume = (volume === 'low') ? 0.35 : 1.0;
+    if (italianVoice) utterance.voice = italianVoice;
+    window.speechSynthesis.speak(utterance);
+  });
+}
+
+// ============================================================
+// DOM
+// ============================================================
+const fileInput = document.getElementById('fileInput');
+const loader = document.getElementById('loader');
+const editor = document.getElementById('editor');
+const loadedName = document.getElementById('loadedName');
+const filenameInput = document.getElementById('filenameInput');
+const generateBtn = document.getElementById('generateBtn');
+const reloadBtn = document.getElementById('reloadBtn');
+
+const eventsList = document.getElementById('eventsList');
+const voiceList = document.getElementById('voiceList');
+const micList = document.getElementById('micList');
+const addEventBtn = document.getElementById('addEventBtn');
+const addVoiceBtn = document.getElementById('addVoiceBtn');
+const addMicBtn = document.getElementById('addMicBtn');
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.editor-section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.target).classList.add('active');
+  });
+});
+
+// ============================================================
+// FILE LOADING
+// ============================================================
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsedEvents = parseArrayFromHtml(text, 'SCHEDULED_EVENTS');
+    const parsedVoice = parseArrayFromHtml(text, 'VOICE_REPLIES');
+    const parsedMic = parseArrayFromHtml(text, 'MIC_PHRASES');
+
+    if (!parsedEvents) {
+      alert("Non ho trovato 'SCHEDULED_EVENTS' nel file.\nAssicurati che sia un avatar HTML valido.");
+      return;
+    }
+
+    currentHtml = text;
+    currentFilename = file.name;
+    events = parsedEvents;
+    voiceReplies = parsedVoice || [];
+    micPhrases = parsedMic || [];
+
+    loadedName.textContent = '📄 ' + file.name;
+    suggestFilename();
+    renderAll();
+    loader.hidden = true;
+    editor.hidden = false;
+  } catch (err) {
+    alert('Errore di lettura: ' + err.message);
+  }
+  fileInput.value = '';
+});
+
+reloadBtn.addEventListener('click', () => fileInput.click());
+
+// ============================================================
+// PARSER (bracket matching generico)
+// ============================================================
+function findArrayBounds(html, marker) {
+  const idx = html.indexOf(marker);
+  if (idx === -1) return null;
+
+  const openBracket = html.indexOf('[', idx);
+  if (openBracket === -1) return null;
+
+  let depth = 0;
+  let inString = false, stringChar = '';
+  let inLineComment = false, inBlockComment = false;
+
+  for (let i = openBracket; i < html.length; i++) {
+    const c = html[i];
+    const next = html[i + 1];
+
+    if (inLineComment) { if (c === '\n') inLineComment = false; continue; }
+    if (inBlockComment) { if (c === '*' && next === '/') { inBlockComment = false; i++; } continue; }
+    if (inString) {
+      if (c === '\\') { i++; continue; }
+      if (c === stringChar) inString = false;
+      continue;
+    }
+    if (c === '/' && next === '/') { inLineComment = true; i++; continue; }
+    if (c === '/' && next === '*') { inBlockComment = true; i++; continue; }
+    if (c === '"' || c === "'" || c === '`') { inString = true; stringChar = c; continue; }
+
+    if (c === '[') depth++;
+    else if (c === ']') {
+      depth--;
+      if (depth === 0) return { open: openBracket, close: i };
+    }
+  }
+  return null;
+}
+
+function parseArrayFromHtml(html, marker) {
+  const bounds = findArrayBounds(html, marker);
+  if (!bounds) return null;
+  const arrStr = html.slice(bounds.open, bounds.close + 1);
+  try {
+    const fn = new Function('return ' + arrStr);
+    const arr = fn();
+    return Array.isArray(arr) ? arr : null;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+}
+
+// ============================================================
+// FILENAME SUGGESTION
+// ============================================================
+function suggestFilename() {
+  const m = currentFilename.match(/^index(\d+)\.html?$/i);
+  if (m) {
+    const num = parseInt(m[1], 10);
+    filenameInput.value = 'index' + String(num + 1).padStart(2, '0') + '.html';
+  } else if (/^index\.html?$/i.test(currentFilename)) {
+    filenameInput.value = 'index02.html';
+  } else {
+    filenameInput.value = 'index02.html';
+  }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function escapeAttr(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function renderAll() {
+  renderEvents();
+  renderPhrases('voice', voiceReplies, voiceList);
+  renderPhrases('mic', micPhrases, micList);
+}
+
+function renderEvents() {
+  eventsList.innerHTML = '';
+  if (events.length === 0) {
+    eventsList.innerHTML = '<p class="empty">NESSUN EVENTO — AGGIUNGINE UNO</p>';
+    return;
+  }
+
+  events.forEach((ev, i) => {
+    const card = document.createElement('div');
+    card.className = 'event-card' + (ev.active === false ? ' inactive' : '');
+
+    const hh = String(ev.h ?? 0).padStart(2, '0');
+    const mm = String(ev.m ?? 0).padStart(2, '0');
+    const isSeq = Array.isArray(ev.sequence);
+    const vol = ev.volume === 'low' ? 'low' : 'normal';
+
+    const seqText = isSeq ? ev.sequence.join('\n') : '';
+    const textVal = !isSeq ? (ev.text || '') : '';
+
+    card.innerHTML = `
+      <div class="row top">
+        <input type="time" class="time-input" data-idx="${i}" value="${hh}:${mm}">
+        <select class="type-input" data-idx="${i}">
+          <option value="text"${!isSeq ? ' selected' : ''}>Frase singola</option>
+          <option value="sequence"${isSeq ? ' selected' : ''}>Sequenza</option>
+        </select>
+        <select class="volume-input" data-idx="${i}">
+          <option value="normal"${vol === 'normal' ? ' selected' : ''}>Voce normale</option>
+          <option value="low"${vol === 'low' ? ' selected' : ''}>Sottovoce</option>
+        </select>
+        <label class="toggle">
+          <input type="checkbox" class="active-input" data-idx="${i}"${ev.active !== false ? ' checked' : ''}>
+          <span>ATTIVO</span>
+        </label>
+        <button class="test-btn event-test" data-idx="${i}" title="Prova sintesi vocale">▶ Prova</button>
+        <button class="delete-btn event-del" data-idx="${i}" title="Elimina">🗑</button>
+      </div>
+      <div class="content">
+        ${isSeq
+          ? `<textarea class="seq-input" data-idx="${i}" rows="${Math.max(3, ev.sequence.length)}">${escapeAttr(seqText)}<\/textarea>
+             <p class="hint">Una riga = una frase. Riga vuota = pausa breve.</p>`
+          : `<input type="text" class="text-input" data-idx="${i}" value="${escapeAttr(textVal)}" placeholder="Testo della frase...">
+             <p class="hint">Frase unica detta in una volta.</p>`
+        }
+      </div>
+    `;
+    eventsList.appendChild(card);
+  });
+  attachEventListeners();
+}
+
+function renderPhrases(type, arr, container) {
+  container.innerHTML = '';
+  if (arr.length === 0) {
+    container.innerHTML = '<p class="empty">NESSUNA FRASE PRESENTE</p>';
+    return;
+  }
+
+  arr.forEach((phrase, i) => {
+    const card = document.createElement('div');
+    card.className = 'phrase-card';
+    card.innerHTML = `
+      <input type="text" class="phrase-input" data-type="${type}" data-idx="${i}" value="${escapeAttr(phrase)}">
+      <button class="test-btn phrase-test" data-type="${type}" data-idx="${i}" title="Prova sintesi vocale">▶ Prova</button>
+      <button class="delete-btn phrase-del" data-type="${type}" data-idx="${i}" title="Elimina">🗑</button>
+    `;
+    container.appendChild(card);
+  });
+  attachPhraseListeners();
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+function attachEventListeners() {
+  eventsList.querySelectorAll('.time-input').forEach(el => {
+    el.addEventListener('change', e => {
+      const [h, m] = e.target.value.split(':').map(Number);
+      const idx = parseInt(e.target.dataset.idx, 10);
+      events[idx].h = h;
+      events[idx].m = m;
+    });
+  });
+
+  eventsList.querySelectorAll('.type-input').forEach(el => {
+    el.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const ev = events[idx];
+      if (e.target.value === 'sequence') {
+        if (!Array.isArray(ev.sequence)) {
+          ev.sequence = ev.text ? [ev.text] : [''];
+          delete ev.text;
+        }
+      } else {
+        if (Array.isArray(ev.sequence)) {
+          ev.text = ev.sequence.find(s => s && s.trim()) || '';
+          delete ev.sequence;
+        }
+      }
+      renderEvents();
+    });
+  });
+
+  eventsList.querySelectorAll('.volume-input').forEach(el => {
+    el.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      events[idx].volume = e.target.value;
+    });
+  });
+
+  eventsList.querySelectorAll('.active-input').forEach(el => {
+    el.addEventListener('change', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      events[idx].active = e.target.checked;
+      e.target.closest('.event-card').classList.toggle('inactive', !e.target.checked);
+    });
+  });
+
+  eventsList.querySelectorAll('.event-test').forEach(el => {
+    el.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const ev = events[idx];
+      const vol = ev.volume || 'normal';
+      if (Array.isArray(ev.sequence)) {
+        playSequence(ev.sequence, vol);
+      } else {
+        speakText(ev.text || '', vol);
+      }
+    });
+  });
+
+  eventsList.querySelectorAll('.event-del').forEach(el => {
+    el.addEventListener('click', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const card = e.target.closest('.event-card');
+      if (confirm('Eliminare questo evento?')) {
+        card.style.transition = 'all 0.2s';
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+          events.splice(idx, 1);
+          renderEvents();
+        }, 180);
+      }
+    });
+  });
+
+  eventsList.querySelectorAll('.text-input').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      events[idx].text = e.target.value;
+    });
+  });
+
+  eventsList.querySelectorAll('.seq-input').forEach(el => {
+    el.addEventListener('input', e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      events[idx].sequence = e.target.value.split('\n');
+    });
+  });
+}
+
+function attachPhraseListeners() {
+  document.querySelectorAll('.phrase-input').forEach(el => {
+    el.addEventListener('input', e => {
+      const type = e.target.dataset.type;
+      const idx = parseInt(e.target.dataset.idx, 10);
+      if (type === 'voice') voiceReplies[idx] = e.target.value;
+      if (type === 'mic') micPhrases[idx] = e.target.value;
+    });
+  });
+
+  document.querySelectorAll('.phrase-test').forEach(el => {
+    el.addEventListener('click', e => {
+      const type = e.target.dataset.type;
+      const idx = parseInt(e.target.dataset.idx, 10);
+      const text = (type === 'voice') ? voiceReplies[idx] : micPhrases[idx];
+      speakText(text || '', 'normal');
+    });
+  });
+
+  document.querySelectorAll('.phrase-del').forEach(el => {
+    el.addEventListener('click', e => {
+      const type = e.target.dataset.type;
+      const idx = parseInt(e.target.dataset.idx, 10);
+      if (confirm('Eliminare questa frase?')) {
+        if (type === 'voice') voiceReplies.splice(idx, 1);
+        if (type === 'mic') micPhrases.splice(idx, 1);
+        renderAll();
+      }
+    });
+  });
+}
+
+// ============================================================
+// ADD BUTTONS
+// ============================================================
+addEventBtn.addEventListener('click', () => {
+  const now = new Date();
+  let h = now.getHours();
+  let m = now.getMinutes() + 5;
+  if (m >= 60) { m -= 60; h = (h + 1) % 24; }
+
+  events.push({ h, m, text: 'nuovo messaggio' });
+  renderEvents();
+  const last = eventsList.lastElementChild;
+  if (last) {
+    last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const input = last.querySelector('.text-input');
+    if (input) { input.focus(); input.select(); }
+  }
+});
+
+addVoiceBtn.addEventListener('click', () => {
+  voiceReplies.push('nuova risposta');
+  renderPhrases('voice', voiceReplies, voiceList);
+  const last = voiceList.lastElementChild;
+  if (last) {
+    last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const input = last.querySelector('.phrase-input');
+    if (input) { input.focus(); input.select(); }
+  }
+});
+
+addMicBtn.addEventListener('click', () => {
+  micPhrases.push('nuova reazione');
+  renderPhrases('mic', micPhrases, micList);
+  const last = micList.lastElementChild;
+  if (last) {
+    last.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const input = last.querySelector('.phrase-input');
+    if (input) { input.focus(); input.select(); }
+  }
+});
+
+// ============================================================
+// SERIALIZE ARRAYS
+// ============================================================
+function serializeEvents() {
+  if (events.length === 0) return '[]';
+  let out = '[\n';
+  events.forEach(ev => {
+    out += '  {\n';
+    out += `    h: ${ev.h}, m: ${ev.m},\n`;
+    if (ev.active === false) out += `    active: false,\n`;
+    if (ev.volume === 'low') out += `    volume: 'low',\n`;
+    if (Array.isArray(ev.sequence)) {
+      out += `    sequence: [\n`;
+      ev.sequence.forEach(line => {
+        out += `      ${JSON.stringify(line)},\n`;
+      });
+      out += `    ]\n`;
+    } else {
+      out += `    text: ${JSON.stringify(ev.text || '')}\n`;
+    }
+    out += '  },\n';
+  });
+  out += ']';
+  return out;
+}
+
+function serializeStringArray(arr) {
+  if (arr.length === 0) return '[]';
+  return '[\n  ' + arr.map(s => JSON.stringify(s)).join(',\n  ') + '\n]';
+}
+
+// ============================================================
+// GENERATE FILE
+// ============================================================
+function buildNewHtml(baseHtml) {
+  let html = baseHtml || currentHtml;
+
+  const bEvents = findArrayBounds(html, 'SCHEDULED_EVENTS');
+  if (bEvents) {
+    html = html.slice(0, bEvents.open) + serializeEvents() + html.slice(bEvents.close + 1);
+  }
+
+  const bVoice = findArrayBounds(html, 'VOICE_REPLIES');
+  if (bVoice) {
+    html = html.slice(0, bVoice.open) + serializeStringArray(voiceReplies) + html.slice(bVoice.close + 1);
+  }
+
+  const bMic = findArrayBounds(html, 'MIC_PHRASES');
+  if (bMic) {
+    html = html.slice(0, bMic.open) + serializeStringArray(micPhrases) + html.slice(bMic.close + 1);
+  }
+
+  return html;
+}
+
+generateBtn.addEventListener('click', async () => {
+  try {
+    const newHtml = buildNewHtml();
+    const filename = (filenameInput.value.trim() || 'index02.html');
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(newHtml);
+        await writable.close();
+        flash('✅ FILE SALVATO');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('showSaveFilePicker failed, falling back', err);
+      }
+    }
+
+    const blob = new Blob([newHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    flash('✅ FILE SCARICATO');
+  } catch (err) {
+    alert('Errore: ' + err.message);
+  }
+});
+
+// ============================================================
+// FLASH
+// ============================================================
+function flash(msg) {
+  const el = document.createElement('div');
+  el.className = 'flash';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 350);
+  }, 2000);
+}
+</script>
+
+<!-- ============================================================
+     API per il tool unico: carica l'avatar dall'esterno
+     ============================================================ -->
+<script>
+window.loadSharedAvatar = async function(name, text) {
+  const input = document.getElementById('fileInput');
+  const file = new File([text], name, { type: 'text/html' });
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 0));
+};
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea id="src-audio" hidden>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio &amp; Reattività Editor — Avatar</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    background-color: #000d06; color: #00ff88;
+    font-family: 'Courier New', Courier, monospace;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(0,255,136,0.08) 0%, transparent 60%),
+      linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    padding: 24px 16px 60px; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { text-align: center; margin-bottom: 28px; }
+  h1 { font-size: clamp(18px, 3vw, 26px); letter-spacing: 4px; text-shadow: 0 0 14px rgba(0,255,136,0.7); margin-bottom: 6px; }
+  .sub { color: #00cc66; font-size: 12px; letter-spacing: 2px; opacity: 0.75; }
+  main { max-width: 900px; margin: 0 auto; }
+
+  .loader {
+    border: 1px solid rgba(0,255,157,0.3); border-radius: 12px; padding: 40px 24px; text-align: center;
+    background: rgba(0,255,157,0.03);
+    box-shadow: 0 0 30px rgba(0,255,157,0.06), inset 0 0 40px rgba(0,255,157,0.03);
+  }
+  .loader p { margin-bottom: 16px; font-size: 14px; letter-spacing: 1px; }
+  .loader .hint { font-size: 11px; opacity: 0.6; margin-top: 18px; letter-spacing: 1px; }
+  code { background: rgba(0,255,136,0.1); padding: 2px 6px; border-radius: 4px; color: #00ffaa; }
+  .file-btn {
+    display: inline-block; padding: 12px 28px; border: 1px solid #00ff88; border-radius: 8px; color: #00ff88;
+    background: rgba(0,255,136,0.08); cursor: pointer; font-family: inherit; font-size: 14px; letter-spacing: 2px;
+    transition: all 0.2s; text-transform: uppercase;
+  }
+  .file-btn:hover { background: rgba(0,255,136,0.18); box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px 16px;
+    border: 1px solid rgba(0,255,157,0.2); border-radius: 10px; background: rgba(0,255,157,0.03); flex-wrap: wrap;
+  }
+  .toolbar .filename { flex: 1; font-size: 12px; letter-spacing: 1px; opacity: 0.85; min-width: 140px; }
+
+  button {
+    font-family: inherit; background: transparent; color: #00ff88; border: 1px solid rgba(0,255,136,0.45);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; letter-spacing: 1.5px;
+    text-transform: uppercase; transition: all 0.15s;
+  }
+  button:hover { background: rgba(0,255,136,0.12); border-color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.3); }
+  button:active { transform: scale(0.97); }
+
+  .group-title { font-size: 12px; letter-spacing: 3px; color: #00cc66; margin: 26px 0 10px; opacity: 0.9; }
+
+  .card {
+    border: 1px solid rgba(0,255,157,0.22); border-radius: 10px; background: rgba(0,255,157,0.03);
+    padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 0 18px rgba(0,255,157,0.04);
+  }
+  .card.changed { border-color: rgba(255,204,68,0.6); }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .card-title { font-size: 14px; letter-spacing: 1.5px; }
+  .orig { font-size: 10px; opacity: 0.55; letter-spacing: 1px; }
+  .desc { font-size: 11px; opacity: 0.6; letter-spacing: 0.5px; margin-bottom: 10px; line-height: 1.5; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  input[type="range"] { flex: 1; min-width: 160px; accent-color: #00ff88; cursor: pointer; }
+  input[type="number"] {
+    font-family: inherit; width: 84px; background: rgba(0,0,0,0.4); color: #00ff88;
+    border: 1px solid rgba(0,255,157,0.3); border-radius: 6px; padding: 7px 8px; font-size: 13px; outline: none;
+  }
+  input[type="number"]:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.35); }
+  input[type="text"] {
+    font-family: inherit; background: rgba(0,0,0,0.4); color: #00ff88; border: 1px solid rgba(0,255,157,0.3);
+    border-radius: 6px; padding: 7px 10px; font-size: 13px; outline: none; flex: 1; min-width: 180px;
+  }
+  input[type="text"]:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.35); }
+  .reset-btn { padding: 7px 10px; opacity: 0.8; }
+  .unit { font-size: 11px; opacity: 0.6; letter-spacing: 1px; min-width: 22px; }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; }
+  .presets button { flex: 1; min-width: 120px; }
+  .presets button small { display: block; font-size: 9px; opacity: 0.6; letter-spacing: 0.5px; text-transform: none; margin-top: 3px; }
+
+  .toggle {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; letter-spacing: 1.5px;
+    padding: 8px 12px; border: 1px solid rgba(0,255,157,0.25); border-radius: 6px; user-select: none;
+  }
+  .toggle input { accent-color: #00ff88; cursor: pointer; }
+
+  .note { font-size: 11px; opacity: 0.55; letter-spacing: 1px; line-height: 1.6; margin-top: 18px; }
+
+  .output {
+    margin-top: 30px; padding: 20px; border: 1px solid rgba(0,255,157,0.3); border-radius: 10px;
+    background: rgba(0,255,157,0.05); display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .output label { font-size: 12px; letter-spacing: 2px; color: #00cc66; }
+  #generateBtn { background: rgba(0,255,136,0.15); border-color: #00ff88; padding: 10px 22px; font-size: 13px; }
+  #generateBtn:hover { background: rgba(0,255,136,0.28); box-shadow: 0 0 22px rgba(0,255,136,0.5); }
+
+  .flash {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(0,30,15,0.95); color: #00ff88; padding: 12px 28px; border: 1px solid #00ff88; border-radius: 8px;
+    font-size: 13px; letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,255,136,0.4); opacity: 0; transition: all 0.3s;
+    pointer-events: none; z-index: 9999;
+  }
+  .flash.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>◈ AUDIO EDITOR ◈</h1>
+  <p class="sub">VOLUMI E REATTIVITÀ — DESK AVATAR</p>
+</header>
+
+<main>
+  <section class="loader" id="loader">
+    <p>Carica un file avatar HTML per iniziare</p>
+    <label class="file-btn">
+      <input type="file" accept=".html,.htm" id="fileInput" hidden>
+      📁 SCEGLI FILE
+    </label>
+    <p class="hint">Il file deve contenere <code>const AUDIO_CONFIG = {...}</code>, <code>const SPEECH_VOLUME_CONFIG = {...}</code> e, per la reattività, <code>const MIC_CONFIG = {...}</code></p>
+  </section>
+
+  <section id="editor" hidden>
+    <div class="toolbar">
+      <span class="filename" id="loadedName">—</span>
+      <button id="reloadBtn">↻ Ricarica</button>
+      <button id="resetAllBtn">⟲ Ripristina tutto</button>
+    </div>
+
+    <div id="fieldsList"></div>
+
+    <p class="note">
+      Il pulsante ▶ PROVA usa la voce italiana del tuo browser e i suoni dell'avatar al volume scelto.<br>
+      Il volume reale dipende anche dal volume del PC. Le voci vanno da 0 a 1; i suoni elettronici sono molto più bassi (0.03–0.1 di solito).<br>
+      I volumi <b>A · T · L</b> in cima sono i default dell'avatar; nell'avatar puoi poi scalarli in tempo reale con il tasto <code>V</code> (master volume).<br>
+      Reattività: i profili impostano insieme più soglie; poi puoi ritoccare ogni valore. Per tarare sul campo apri l'avatar e premi <code>D</code> (misuratore del microfono) per vedere livello, fondo, crest e soglie.
+    </p>
+
+    <div class="output">
+      <label for="filenameInput">SALVA COME:</label>
+      <input type="text" id="filenameInput" value="index02.html">
+      <button id="generateBtn">💾 GENERA FILE</button>
+    </div>
+  </section>
+</main>
+
+<script>
+// ============================================================
+// CAMPI MODIFICABILI
+// ============================================================
+const GROUPS = [
+  { id: 'speechMaster', title: '◈ VOLUME VOCI (A · T · L)' },
+  { id: 'voice', title: '◈ VOCE' },
+  { id: 'sound', title: '◈ SUONI ELETTRONICI' },
+  { id: 'micVoice', title: '◈ REATTIVITÀ — VOCE E SUONI PROLUNGATI' },
+  { id: 'micSpike', title: '◈ REATTIVITÀ — COLPI SECCHI (mani, porte)' }
+];
+
+// Profili di reattività: impostano insieme più soglie di MIC_CONFIG (non toccano i volumi)
+const PRESETS = [
+  { id: 'deaf', label: 'Solo colpi forti', hint: 'ignora la voce, scatta solo ai botti',
+    values: { voiceRatio: 6, voiceMin: 0.02, listenAfterMs: 2000, voiceReplyChance: 0, voiceReplyCooldownMs: 60000,
+              spikeRatio: 6, minLevel: 0.08, crestMin: 10, loudMult: 1.4, cooldownMs: 10000, speakChance: 0.2 } },
+  { id: 'calm', label: 'Calmo', hint: 'poco reattivo, risponde di rado',
+    values: { voiceRatio: 4, voiceMin: 0.012, listenAfterMs: 1200, voiceReplyChance: 0.2, voiceReplyCooldownMs: 45000,
+              spikeRatio: 7, minLevel: 0.07, crestMin: 10, loudMult: 1.5, cooldownMs: 10000, speakChance: 0.15 } },
+  { id: 'normal', label: 'Normale', hint: 'valori predefiniti del progetto',
+    values: { voiceRatio: 2.8, voiceMin: 0.007, listenAfterMs: 700, voiceReplyChance: 0.5, voiceReplyCooldownMs: 20000,
+              spikeRatio: 5, minLevel: 0.04, crestMin: 8, loudMult: 1.3, cooldownMs: 5000, speakChance: 0.35 } },
+  { id: 'sensitive', label: 'Sensibile', hint: 'sente da lontano, risponde spesso',
+    values: { voiceRatio: 2, voiceMin: 0.005, listenAfterMs: 500, voiceReplyChance: 0.7, voiceReplyCooldownMs: 10000,
+              spikeRatio: 3.5, minLevel: 0.025, crestMin: 6, loudMult: 1.15, cooldownMs: 3000, speakChance: 0.5 } }
+];
+
+const FIELDS = [
+  // ---- VOLUME VOCI (A / T / L) — blocco SPEECH_VOLUME_CONFIG ----
+  { key: 'aiContextVolume', block: 'SPEECH_VOLUME_CONFIG', group: 'speechMaster', kind: 'speech',
+    label: 'AI con contesto (A)',
+    desc: 'Volume delle risposte AI quando è attiva la modalità A (con materiale di contesto).',
+    sample: 'risposta con contesto', max: 1, step: 0.01 },
+  { key: 'aiNoContextVolume', block: 'SPEECH_VOLUME_CONFIG', group: 'speechMaster', kind: 'speech',
+    label: 'AI senza contesto (T)',
+    desc: 'Volume delle risposte AI quando è attiva la modalità T (chat libera, senza materiale).',
+    sample: 'risposta senza contesto', max: 1, step: 0.01 },
+  { key: 'readVolume', block: 'SPEECH_VOLUME_CONFIG', group: 'speechMaster', kind: 'speech',
+    label: 'Lettura file (L)',
+    desc: 'Volume della lettura del file audio_sourge.js (o file importato) quando premi L.',
+    sample: 'Ciao, questa è una prova della lettura', max: 1, step: 0.01 },
+
+  // ---- VOCE (altri volumi) ----
+  { key: 'scheduledVolume', block: 'AUDIO_CONFIG', group: 'voice', kind: 'speech',
+    label: 'Messaggi schedulati',
+    desc: 'Frasi agli orari fissi, avvisi di pausa e saluti al rientro.',
+    sample: "è l'ora del caffè", max: 1, step: 0.01 },
+  { key: 'selfTalkVolume', block: 'AUDIO_CONFIG', group: 'voice', kind: 'speech',
+    label: 'Frasi spontanee',
+    desc: 'Le battute che dice ogni tanto da solo ("ho fame", "che palle"...).',
+    sample: 'ho fame', max: 1, step: 0.01 },
+  { key: 'lowVolume', block: 'AUDIO_CONFIG', group: 'voice', kind: 'speech',
+    label: 'Sottovoce',
+    desc: 'Messaggi schedulati impostati con l\'opzione "Sottovoce" in schedule.html.',
+    sample: 'tra poco si esce', max: 1, step: 0.01 },
+  { key: 'speakVolume', block: 'MIC_CONFIG', group: 'voice', kind: 'speech',
+    label: 'Risposte ai rumori',
+    desc: 'Frasi in risposta alla tua voce o a un colpo ("eh?", "dimmi", "oh!").',
+    sample: 'dimmi', max: 1, step: 0.01 },
+
+  // ---- SUONI ELETTRONICI ----
+  { key: 'greetVolume', block: 'AUDIO_CONFIG', group: 'sound', kind: 'greet',
+    label: 'Suono del saluto',
+    desc: 'Le tre note quando tocchi lo schermo.', max: 0.3, step: 0.001 },
+  { key: 'yawnVolume', block: 'AUDIO_CONFIG', group: 'sound', kind: 'yawn',
+    label: 'Sbadiglio',
+    desc: 'Il suono basso quando sbadiglia.', max: 0.3, step: 0.001 },
+  { key: 'chirpVolume', block: 'AUDIO_CONFIG', group: 'sound', kind: 'chirp',
+    label: 'Cinguettio',
+    desc: 'Definito nel file ma al momento non usato dall\'avatar.', max: 0.3, step: 0.001 },
+
+  // ---- REATTIVITÀ: voce / suoni prolungati ----
+  { key: 'voiceRatio', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: '× fondo',
+    label: 'Soglia del suono',
+    desc: 'Quante volte il rumore di fondo va superato per contare come suono. Più BASSO = ti sente da più lontano; più ALTO = ignora i rumori deboli.',
+    min: 1.2, max: 8, step: 0.1 },
+  { key: 'voiceMin', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: 'livello',
+    label: 'Livello minimo del suono',
+    desc: 'Soglia assoluta: sotto questo livello non sente nulla, anche in una stanza molto silenziosa. Più basso = più sensibile.',
+    min: 0.001, max: 0.05, step: 0.001 },
+  { key: 'listenAfterMs', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: 'ms',
+    label: 'Quando si mette in ascolto',
+    desc: 'Dopo quanto suono continuo "ti ascolta" (occhi attenti). Più basso = si mette in ascolto prima.',
+    min: 100, max: 5000, step: 50 },
+  { key: 'burstGapMs', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: 'ms',
+    label: 'Pausa tra le parole',
+    desc: 'Silenzio massimo tra due parole prima di considerare finita la frase. Più alto = aspetta di più prima di rispondere.',
+    min: 100, max: 2000, step: 50 },
+  { key: 'voiceReplyChance', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: '0–1',
+    label: 'Probabilità di rispondere alla voce',
+    desc: 'Quante volte risponde a fine frase ("dimmi", "eh?"). 0 = mai, 1 = sempre.',
+    min: 0, max: 1, step: 0.05 },
+  { key: 'voiceReplyMinMs', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: 'ms',
+    label: 'Durata minima del parlato per rispondere',
+    desc: 'Sotto questa durata non risponde (evita di rispondere a un colpo di tosse o a una parola sola).',
+    min: 200, max: 5000, step: 50 },
+  { key: 'voiceReplyCooldownMs', block: 'MIC_CONFIG', group: 'micVoice', kind: 'mic', unit: 'ms',
+    label: 'Pausa tra due risposte',
+    desc: 'Tempo minimo tra una risposta alla voce e la successiva. 20000 = 20 secondi.',
+    min: 0, max: 120000, step: 1000 },
+
+  // ---- REATTIVITÀ: colpi secchi ----
+  { key: 'spikeRatio', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: '× fondo',
+    label: 'Soglia del colpo',
+    desc: 'Quante volte il fondo va superato per essere un colpo. Più BASSO = sobbalza anche a rumori leggeri; più ALTO = solo botti.',
+    min: 1.5, max: 15, step: 0.1 },
+  { key: 'minLevel', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: 'livello',
+    label: 'Livello minimo del colpo',
+    desc: 'Soglia assoluta: sotto questo livello nessun sobbalzo. Abbassalo se i colpi forti non scattano.',
+    min: 0.005, max: 0.3, step: 0.005 },
+  { key: 'spikeMaxMs', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: 'ms',
+    label: 'Durata massima di un colpo',
+    desc: 'Sotto questa durata è un colpo, sopra è voce. Più alto = anche suoni un po\' più lunghi fanno sobbalzare.',
+    min: 100, max: 2000, step: 50 },
+  { key: 'crestMin', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: 'crest',
+    label: 'Appuntimento minimo (crest)',
+    desc: 'Rapporto picco/volume medio: i colpi secchi hanno valori alti, la voce arriva a ~7. Più basso = più facile che scatti (ma anche la voce può farlo).',
+    min: 2, max: 20, step: 0.5 },
+  { key: 'loudMult', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: '×',
+    label: 'Colpo molto forte (senza crest)',
+    desc: 'Un picco sopra la soglia per questo fattore scatta anche senza crest alto. Basso = scatta a ogni suono forte; alto = solo a botti violenti.',
+    min: 1, max: 3, step: 0.05 },
+  { key: 'cooldownMs', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: 'ms',
+    label: 'Pausa tra due sobbalzi',
+    desc: 'Tempo minimo tra un sobbalzo e il successivo. 5000 = 5 secondi.',
+    min: 0, max: 30000, step: 500 },
+  { key: 'speakChance', block: 'MIC_CONFIG', group: 'micSpike', kind: 'mic', unit: '0–1',
+    label: 'Probabilità che parli al sobbalzo',
+    desc: 'Quante volte, oltre a sobbalzare, dice anche qualcosa ("oh!", "che è stato?"). 0 = mai.',
+    min: 0, max: 1, step: 0.05 }
+];
+
+// --- PURE ---
+function blockBounds(html, name) {
+  const start = html.indexOf('const ' + name + ' = {');
+  if (start === -1) return null;
+  const end = html.indexOf('\n};', start);
+  if (end === -1) return null;
+  return { start, end };
+}
+function readNumber(html, field) {
+  const b = blockBounds(html, field.block);
+  if (!b) return null;
+  const m = new RegExp('\\b' + field.key + ':\\s*(-?\\d*\\.?\\d+)').exec(html.slice(b.start, b.end));
+  return m ? parseFloat(m[1]) : null;
+}
+function writeNumber(html, field, value) {
+  const b = blockBounds(html, field.block);
+  if (!b) return html;
+  const re = new RegExp('(\\b' + field.key + ':\\s*)(-?\\d*\\.?\\d+)');
+  const text = html.slice(b.start, b.end);
+  if (!re.test(text)) return html;
+  const num = String(parseFloat(Number(value).toFixed(4)));
+  return html.slice(0, b.start) + text.replace(re, '$1' + num) + html.slice(b.end);
+}
+function readEnabled(html) {
+  const b = blockBounds(html, 'AUDIO_CONFIG');
+  if (!b) return null;
+  const m = /\benabled:\s*(true|false)/.exec(html.slice(b.start, b.end));
+  return m ? m[1] === 'true' : null;
+}
+function writeEnabled(html, value) {
+  const b = blockBounds(html, 'AUDIO_CONFIG');
+  if (!b) return html;
+  const text = html.slice(b.start, b.end);
+  if (!/\benabled:\s*(true|false)/.test(text)) return html;
+  return html.slice(0, b.start) + text.replace(/(\benabled:\s*)(true|false)/, '$1' + (value ? 'true' : 'false')) + html.slice(b.end);
+}
+// --- /PURE ---
+
+// ============================================================
+// STATO
+// ============================================================
+let currentHtml = '';
+let currentFilename = '';
+let values = {};
+let originals = {};
+let enabled = true, originalEnabled = true, hasEnabled = false;
+
+const fileInput = document.getElementById('fileInput');
+const loader = document.getElementById('loader');
+const editor = document.getElementById('editor');
+const fieldsList = document.getElementById('fieldsList');
+const loadedName = document.getElementById('loadedName');
+const filenameInput = document.getElementById('filenameInput');
+const generateBtn = document.getElementById('generateBtn');
+const reloadBtn = document.getElementById('reloadBtn');
+const resetAllBtn = document.getElementById('resetAllBtn');
+
+// ============================================================
+// CARICAMENTO FILE
+// ============================================================
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const found = {};
+    FIELDS.forEach(f => { const v = readNumber(text, f); if (v !== null) found[f.key] = v; });
+    if (Object.keys(found).length === 0) {
+      alert("Non ho trovato 'const AUDIO_CONFIG = {...}' con i volumi nel file.\nAssicurati che sia un avatar HTML valido.");
+      return;
+    }
+    currentHtml = text;
+    currentFilename = file.name;
+    originals = { ...found };
+    values = { ...found };
+    const en = readEnabled(text);
+    hasEnabled = en !== null;
+    enabled = originalEnabled = en !== null ? en : true;
+    loadedName.textContent = '📄 ' + file.name;
+    suggestFilename();
+    render();
+    loader.hidden = true;
+    editor.hidden = false;
+  } catch (err) {
+    alert('Errore di lettura: ' + err.message);
+  }
+  fileInput.value = '';
+});
+reloadBtn.addEventListener('click', () => fileInput.click());
+resetAllBtn.addEventListener('click', () => {
+  values = { ...originals };
+  enabled = originalEnabled;
+  render();
+});
+
+function suggestFilename() {
+  const m = currentFilename.match(/^index(\d+)\.html?$/i);
+  filenameInput.value = m ? 'index' + String(parseInt(m[1], 10) + 1).padStart(2, '0') + '.html' : 'index02.html';
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function fmt(v) { return String(parseFloat(Number(v).toFixed(4))); }
+
+function render() {
+  fieldsList.innerHTML = '';
+
+  GROUPS.forEach(g => {
+    const fields = FIELDS.filter(f => f.group === g.id && f.key in values);
+    if (!fields.length && !(g.id === 'sound' && hasEnabled)) return;
+
+    const title = document.createElement('p');
+    title.className = 'group-title';
+    title.textContent = g.title;
+    fieldsList.appendChild(title);
+
+    if (g.id === 'micVoice') {
+      const pc = document.createElement('div');
+      pc.className = 'card';
+      pc.innerHTML = `
+        <div class="card-head"><span class="card-title">Profili di reattività</span></div>
+        <p class="desc">Impostano insieme tutte le soglie del microfono (sia voce sia colpi). Dopo averne scelto uno puoi ritoccare i singoli valori qui sotto. I volumi non vengono toccati.</p>
+        <div class="presets"></div>`;
+      const box = pc.querySelector('.presets');
+      PRESETS.forEach(p => {
+        const b = document.createElement('button');
+        b.innerHTML = p.label + '<small>' + p.hint + '</small>';
+        b.addEventListener('click', () => {
+          Object.keys(p.values).forEach(k => { if (k in values) values[k] = p.values[k]; });
+          render();
+          flash('PROFILO: ' + p.label.toUpperCase());
+        });
+        box.appendChild(b);
+      });
+      fieldsList.appendChild(pc);
+    }
+
+    if (g.id === 'sound' && hasEnabled) {
+      const card = document.createElement('div');
+      card.className = 'card' + (enabled !== originalEnabled ? ' changed' : '');
+      card.innerHTML = `
+        <div class="card-head"><span class="card-title">Suoni elettronici</span></div>
+        <p class="desc">Interruttore generale di saluto e sbadiglio. Non riguarda la voce.</p>
+        <label class="toggle"><input type="checkbox" id="enabledChk"${enabled ? ' checked' : ''}><span>${enabled ? 'ATTIVI' : 'DISATTIVATI'}</span></label>`;
+      fieldsList.appendChild(card);
+      card.querySelector('#enabledChk').addEventListener('change', e => {
+        enabled = e.target.checked;
+        render();
+      });
+    }
+
+    fields.forEach(f => {
+      const v = values[f.key];
+      const max = Math.max(f.max, v);
+      const min = Math.min(f.min || 0, v);
+      const hasPlay = f.kind !== 'mic';
+      const card = document.createElement('div');
+      card.className = 'card' + (v !== originals[f.key] ? ' changed' : '');
+      card.innerHTML = `
+        <div class="card-head">
+          <span class="card-title">${f.label}</span>
+          <span class="orig">${f.key} · originale ${fmt(originals[f.key])}</span>
+        </div>
+        <p class="desc">${f.desc}</p>
+        <div class="row">
+          <input type="range" min="${min}" max="${max}" step="${f.step}" value="${v}">
+          <input type="number" min="${min}" max="${max}" step="${f.step}" value="${fmt(v)}">
+          ${f.unit ? '<span class="unit">' + f.unit + '</span>' : ''}
+          ${hasPlay ? '<button class="play-btn">▶ Prova</button>' : ''}
+          <button class="reset-btn" title="Ripristina il valore originale">⟲</button>
+        </div>`;
+      fieldsList.appendChild(card);
+
+      const range = card.querySelector('input[type=range]');
+      const num = card.querySelector('input[type=number]');
+      const setVal = (nv) => {
+        nv = Math.max(min, Math.min(max, parseFloat(nv)));
+        if (isNaN(nv)) return;
+        values[f.key] = nv;
+        card.classList.toggle('changed', nv !== originals[f.key]);
+      };
+      range.addEventListener('input', () => { setVal(range.value); num.value = fmt(values[f.key]); });
+      num.addEventListener('change', () => { setVal(num.value); range.value = values[f.key]; num.value = fmt(values[f.key]); });
+      if (hasPlay) card.querySelector('.play-btn').addEventListener('click', () => preview(f, values[f.key]));
+      card.querySelector('.reset-btn').addEventListener('click', () => { values[f.key] = originals[f.key]; render(); });
+    });
+  });
+}
+
+// ============================================================
+// ANTEPRIMA AUDIO
+// ============================================================
+let audioCtx = null;
+function ensureAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, duration, volume, type, freqEnd) {
+  const ac = ensureAudio(); if (!ac) return;
+  const t = ac.currentTime;
+  const osc = ac.createOscillator(), gain = ac.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  if (freqEnd) osc.frequency.linearRampToValueAtTime(freqEnd, t + duration);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(volume, t + 0.03);
+  gain.gain.linearRampToValueAtTime(0, t + duration);
+  osc.connect(gain); gain.connect(ac.destination);
+  osc.start(t); osc.stop(t + duration + 0.05);
+}
+function playGreet(v) {
+  tone(440, 0.07, v, 'sine');
+  setTimeout(() => tone(660, 0.07, v, 'sine'), 80);
+  setTimeout(() => tone(880, 0.13, v, 'sine', 820), 160);
+}
+function playChirp(v) {
+  tone(720, 0.09, v, 'sine', 620);
+  setTimeout(() => tone(560, 0.12, v, 'sine', 480), 95);
+}
+function playYawn(v) {
+  const ac = ensureAudio(); if (!ac) return;
+  const t = ac.currentTime;
+  const osc = ac.createOscillator(), gain = ac.createGain(), filter = ac.createBiquadFilter();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(180, t);
+  osc.frequency.linearRampToValueAtTime(300, t + 0.45);
+  osc.frequency.linearRampToValueAtTime(160, t + 1.0);
+  filter.type = 'lowpass'; filter.frequency.value = 480;
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(v, t + 0.25);
+  gain.gain.linearRampToValueAtTime(0, t + 1.0);
+  osc.connect(filter); filter.connect(gain); gain.connect(ac.destination);
+  osc.start(t); osc.stop(t + 1.05);
+}
+function speak(text, volume) {
+  if (!('speechSynthesis' in window)) { flash('⚠ VOCE NON SUPPORTATA'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'it-IT'; u.rate = 0.95; u.pitch = 1.05; u.volume = Math.max(0, Math.min(1, volume));
+  const voices = speechSynthesis.getVoices();
+  const v = voices.find(x => x.lang === 'it-IT') || voices.find(x => x.lang && x.lang.startsWith('it'));
+  if (v) u.voice = v;
+  speechSynthesis.speak(u);
+}
+function preview(f, v) {
+  if (f.kind === 'speech') speak(f.sample, v);
+  else if (f.kind === 'greet') playGreet(v);
+  else if (f.kind === 'yawn') playYawn(v);
+  else if (f.kind === 'chirp') playChirp(v);
+}
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+// ============================================================
+// GENERA FILE
+// ============================================================
+function buildNewHtml(baseHtml) {
+  let out = baseHtml || currentHtml;
+  FIELDS.forEach(f => { if (f.key in values) out = writeNumber(out, f, values[f.key]); });
+  if (hasEnabled) out = writeEnabled(out, enabled);
+  return out;
+}
+
+generateBtn.addEventListener('click', async () => {
+  try {
+    const newHtml = buildNewHtml();
+    const filename = filenameInput.value.trim() || 'index02.html';
+
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }]
+        });
+        const writable = await handle.createWritable();
+        await writable.write(newHtml);
+        await writable.close();
+        flash('✅ FILE SALVATO');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('showSaveFilePicker fallito, uso il download', err);
+      }
+    }
+
+    const blob = new Blob([newHtml], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    flash('✅ FILE SCARICATO');
+  } catch (err) {
+    alert('Errore: ' + err.message);
+  }
+});
+
+function flash(msg) {
+  const el = document.createElement('div');
+  el.className = 'flash';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 2000);
+}
+</script>
+
+<script>
+window.loadSharedAvatar = async function(name, text) {
+  const input = document.getElementById('fileInput');
+  const file = new File([text], name, { type: 'text/html' });
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 0));
+};
+</script>
+</body>
+</html>
+</textarea>
+
+<textarea id="src-source" hidden>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Source Editor — Avatar</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    background-color: #000d06; color: #00ff88;
+    font-family: 'Courier New', Courier, monospace;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(0,255,136,0.08) 0%, transparent 60%),
+      linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    padding: 24px 16px 60px; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { text-align: center; margin-bottom: 28px; }
+  h1 { font-size: clamp(18px, 3vw, 26px); letter-spacing: 4px; text-shadow: 0 0 14px rgba(0,255,136,0.7); margin-bottom: 6px; }
+  .sub { color: #00cc66; font-size: 12px; letter-spacing: 2px; opacity: 0.75; }
+  main { max-width: 900px; margin: 0 auto; }
+
+  .loader {
+    border: 1px solid rgba(0,255,157,0.3); border-radius: 12px; padding: 40px 24px; text-align: center;
+    background: rgba(0,255,157,0.03);
+    box-shadow: 0 0 30px rgba(0,255,157,0.06), inset 0 0 40px rgba(0,255,157,0.03);
+    margin-bottom: 20px;
+  }
+  .loader p { margin-bottom: 16px; font-size: 14px; letter-spacing: 1px; }
+  .loader .hint { font-size: 11px; opacity: 0.6; margin-top: 18px; letter-spacing: 1px; }
+  code { background: rgba(0,255,136,0.1); padding: 2px 6px; border-radius: 4px; color: #00ffaa; }
+
+  .file-btn {
+    display: inline-block; padding: 12px 28px; border: 1px solid #00ff88; border-radius: 8px; color: #00ff88;
+    background: rgba(0,255,136,0.08); cursor: pointer; font-family: inherit; font-size: 14px; letter-spacing: 2px;
+    transition: all 0.2s; text-transform: uppercase;
+  }
+  .file-btn:hover { background: rgba(0,255,136,0.18); box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 12px 16px;
+    border: 1px solid rgba(0,255,157,0.2); border-radius: 10px; background: rgba(0,255,157,0.03); flex-wrap: wrap;
+  }
+  .toolbar .filename { flex: 1; font-size: 12px; letter-spacing: 1px; opacity: 0.85; min-width: 140px; }
+
+  button {
+    font-family: inherit; background: transparent; color: #00ff88; border: 1px solid rgba(0,255,136,0.45);
+    padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; letter-spacing: 1.5px;
+    text-transform: uppercase; transition: all 0.15s;
+  }
+  button:hover { background: rgba(0,255,136,0.12); border-color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.3); }
+  button:active { transform: scale(0.97); }
+
+  .card {
+    border: 1px solid rgba(0,255,157,0.22); border-radius: 10px; background: rgba(0,255,157,0.03);
+    padding: 16px; margin-bottom: 16px; box-shadow: 0 0 18px rgba(0,255,157,0.04);
+  }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .card-title { font-size: 13px; letter-spacing: 1.5px; color: #00cc66; }
+  .desc { font-size: 11px; opacity: 0.6; letter-spacing: 0.5px; margin-bottom: 12px; line-height: 1.5; }
+
+  textarea {
+    width: 100%; height: 320px; background: rgba(0,0,0,0.5); color: #00ff88;
+    border: 1px solid rgba(0,255,136,0.3); border-radius: 8px; padding: 14px;
+    font-family: 'Courier New', Courier, monospace; font-size: 13px; line-height: 1.5;
+    outline: none; resize: vertical;
+  }
+  textarea:focus { border-color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.35); }
+
+  /* --- Riquadro opzioni import PDF --- */
+  .pdf-options {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 10px 12px; margin-bottom: 12px;
+    border: 1px solid rgba(0,255,157,0.2); border-radius: 8px;
+    background: rgba(0,255,157,0.02);
+    font-size: 11px; letter-spacing: 1px;
+  }
+  .pdf-options label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .pdf-options input[type="checkbox"] { accent-color: #00ff88; cursor: pointer; }
+  .pdf-options input[type="number"] {
+    width: 100px; background: rgba(0,0,0,0.4); color: #00ff88;
+    border: 1px solid rgba(0,255,157,0.3); border-radius: 6px;
+    padding: 6px 8px; font-family: inherit; font-size: 12px; outline: none;
+  }
+  .pdf-options input[type="number"]:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.35); }
+  .pdf-options .hint { font-size: 10px; opacity: 0.55; letter-spacing: 0.5px; }
+  .pdf-options.disabled { opacity: 0.45; pointer-events: none; }
+
+  .char-count { font-size: 10px; opacity: 0.6; letter-spacing: 1px; margin-top: 8px; }
+  .char-count.warn { color: #ffcc44; opacity: 0.9; }
+
+  .output {
+    margin-top: 20px; padding: 20px; border: 1px solid rgba(0,255,157,0.3); border-radius: 10px;
+    background: rgba(0,255,157,0.05); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  }
+  #generateBtn { background: rgba(0,255,136,0.15); border-color: #00ff88; padding: 12px 24px; font-size: 13px; width: 100%; }
+  #generateBtn:hover { background: rgba(0,255,136,0.28); box-shadow: 0 0 22px rgba(0,255,136,0.5); }
+
+  .flash {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(0,30,15,0.95); color: #00ff88; padding: 12px 28px; border: 1px solid #00ff88; border-radius: 8px;
+    font-size: 13px; letter-spacing: 2px; box-shadow: 0 0 30px rgba(0,255,136,0.4); opacity: 0; transition: all 0.3s;
+    pointer-events: none; z-index: 9999;
+  }
+  .flash.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>◈ AUDIO SOURCE EDITOR ◈</h1>
+  <p class="sub">GESTIONE TESTO LETTURA AVATAR — <code>audio_sourge.js</code></p>
+</header>
+
+<main>
+  <section class="loader" id="loaderSection">
+    <p>Seleziona un file esistente o parti da zero</p>
+    <label class="file-btn">
+      <input type="file" accept=".txt,.js,.mjs,.pdf" id="fileInput" hidden>
+      📁 APRI FILE (.TXT, .JS, .PDF)
+    </label>
+    <p class="hint">Oppure <a href="#" id="skipLink" style="color: #00ffaa; text-decoration: underline; cursor: pointer;">scrivi direttamente da zero</a></p>
+  </section>
+
+  <section id="editorSection" hidden>
+    <div class="toolbar">
+      <span class="filename" id="loadedName">📄 Nuovo testo</span>
+      <button id="clearBtn">🗑 Pulisci</button>
+      <button id="reloadLoaderBtn">📁 Apri altro file</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">TESTO LETTO DALL'AVATAR (Tasto L)</span>
+      </div>
+      <p class="desc">
+        Modifica liberamente il testo. Puoi importare anche un PDF: il testo verrà estratto automaticamente. Punteggiatura e spaziatura normale verranno gestite al momento del salvataggio nel formato corretto.
+      </p>
+
+      <div class="pdf-options" id="pdfOptions">
+        <label>
+          <input type="checkbox" id="truncatePdf">
+          <span>Tronca PDF a</span>
+        </label>
+        <input type="number" id="truncateLimit" value="200000" min="1000" step="1000">
+        <span>caratteri</span>
+        <span class="hint">(spento = testo integrale. Consigliato se usi Groq)</span>
+      </div>
+
+      <textarea id="textArea" placeholder="Scrivi o incolla qui il testo..."><\/textarea>
+      <div class="char-count" id="charCount">0 caratteri</div>
+    </div>
+
+    <div class="output">
+      <button id="generateBtn">💾 ESPORTA COME <code>audio_sourge.js</code></button>
+    </div>
+  </section>
+</main>
+
+<script>
+const loaderSection = document.getElementById('loaderSection');
+const editorSection = document.getElementById('editorSection');
+const fileInput = document.getElementById('fileInput');
+const skipLink = document.getElementById('skipLink');
+const reloadLoaderBtn = document.getElementById('reloadLoaderBtn');
+const clearBtn = document.getElementById('clearBtn');
+const textArea = document.getElementById('textArea');
+const loadedName = document.getElementById('loadedName');
+const generateBtn = document.getElementById('generateBtn');
+const charCount = document.getElementById('charCount');
+const pdfOptions = document.getElementById('pdfOptions');
+const truncatePdf = document.getElementById('truncatePdf');
+const truncateLimit = document.getElementById('truncateLimit');
+
+// Aggiorna contatore caratteri e stato del riquadro PDF
+function updateCharCount() {
+  const n = textArea.value.length;
+  charCount.textContent = n.toLocaleString('it-IT') + ' caratteri';
+  const limit = parseInt(truncateLimit.value, 10) || 200000;
+  charCount.classList.toggle('warn', n > limit);
+}
+
+textArea.addEventListener('input', updateCharCount);
+truncateLimit.addEventListener('input', updateCharCount);
+
+// Abilita/disabilita il campo numerico in base alla checkbox
+function syncPdfOptionsState() {
+  pdfOptions.classList.toggle('disabled', !truncatePdf.checked);
+}
+truncatePdf.addEventListener('change', syncPdfOptionsState);
+syncPdfOptionsState();
+
+// ============================================================
+// PDF.JS — caricamento lazy da CDN (pinnato)
+// ============================================================
+const PDFJS_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs';
+const PDFJS_WORKER_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+let pdfjsLib = null;
+let pdfjsLoading = null;
+
+async function ensurePdfJs() {
+  if (pdfjsLib) return pdfjsLib;
+  if (pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = (async () => {
+    try {
+      const mod = await import(PDFJS_CDN);
+      mod.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_CDN;
+      pdfjsLib = mod;
+      return mod;
+    } catch (err) {
+      pdfjsLoading = null;
+      throw new Error('Impossibile caricare pdf.js: ' + err.message);
+    }
+  })();
+  return pdfjsLoading;
+}
+
+async function extractPdfText(file) {
+  const lib = await ensurePdfJs();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  let totalChars = 0;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    let pageText = '';
+    let lastY = null;
+    for (const item of content.items) {
+      if (typeof item.str !== 'string') continue;
+      // Aggiunge uno spazio quando cambia riga (approssimativo)
+      const y = item.transform ? item.transform[5] : null;
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
+        pageText += '\n';
+      } else if (pageText && !pageText.endsWith(' ')) {
+        pageText += ' ';
+      }
+      pageText += item.str;
+      lastY = y;
+    }
+    pageText = pageText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (pageText) {
+      pages.push(pageText);
+      totalChars += pageText.length;
+    }
+  }
+  const text = pages.join('\n\n');
+  return { text, numPages: pdf.numPages, totalChars: text.length };
+}
+
+// ============================================================
+// APERTURA / CHIUSURA EDITOR
+// ============================================================
+function openEditor(name = 'Nuovo testo') {
+  loadedName.textContent = '📄 ' + name;
+  loaderSection.hidden = true;
+  editorSection.hidden = false;
+  updateCharCount();
+}
+
+skipLink.addEventListener('click', (e) => {
+  e.preventDefault();
+  textArea.value = '';
+  openEditor('Testo da zero');
+});
+
+reloadLoaderBtn.addEventListener('click', () => {
+  editorSection.hidden = true;
+  loaderSection.hidden = false;
+});
+
+// ============================================================
+// HANDLER FILE
+// ============================================================
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const isPdf = /\.pdf$/i.test(file.name);
+  const isJs = /\.m?js$/i.test(file.name);
+
+  try {
+    if (isPdf) {
+      // ---- PDF ----
+      let result;
+      try {
+        flash('📄 Estrazione testo dal PDF…');
+        result = await extractPdfText(file);
+      } catch (err) {
+        alert('Errore nell\'estrazione del PDF:\n' + err.message);
+        fileInput.value = '';
+        return;
+      }
+
+      if (!result.text || result.text.length < 10) {
+        alert(
+          '⚠ Questo PDF non contiene testo estraibile.\n\n' +
+          'Probabilmente è un PDF scansionato (immagini) o protetto.\n' +
+          'Servirebbe un OCR, non supportato da questo editor.\n\n' +
+          'Prova con un PDF di testo normale, oppure incolla il testo manualmente.'
+        );
+        fileInput.value = '';
+        return;
+      }
+
+      // Applica eventuale troncatura
+      let finalText = result.text;
+      let truncated = false;
+      if (truncatePdf.checked) {
+        const limit = parseInt(truncateLimit.value, 10) || 200000;
+        if (finalText.length > limit) {
+          finalText = finalText.slice(0, limit);
+          truncated = true;
+        }
+      }
+
+      textArea.value = finalText;
+      openEditor(file.name + ' (' + result.numPages + ' pagine)');
+      if (truncated) {
+        flash('📄 PDF troncato: ' + limit.toLocaleString('it-IT') + '/' + result.totalChars.toLocaleString('it-IT') + ' caratteri');
+      } else {
+        flash('📄 PDF estratto: ' + result.totalChars.toLocaleString('it-IT') + ' caratteri');
+      }
+    } else if (isJs) {
+      // ---- JS / MJS ----
+      let content = await file.text();
+      try {
+        const fake = {};
+        new Function('window', content)(fake);
+        const src = fake.AUDIO_SOURGE;
+        if (Array.isArray(src)) content = src.join('\n\n');
+        else if (typeof src === 'string') content = src;
+      } catch (e) { /* se non è eseguibile lascio il testo com'è */ }
+      textArea.value = content;
+      openEditor(file.name);
+    } else {
+      // ---- TXT / altro testo ----
+      const content = await file.text();
+      textArea.value = content;
+      openEditor(file.name);
+    }
+  } catch (err) {
+    alert('Errore di lettura del file: ' + err.message);
+  }
+  fileInput.value = '';
+});
+
+// ============================================================
+// AZIONI
+// ============================================================
+clearBtn.addEventListener('click', () => {
+  if (confirm('Vuoi davvero cancellare tutto il testo?')) {
+    textArea.value = '';
+    updateCharCount();
+  }
+});
+
+generateBtn.addEventListener('click', async () => {
+  const rawText = textArea.value;
+  const safeText = rawText.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+
+  const fileContent = `// ============================================================
+// audio_sourge.js — testo che l'avatar legge quando premi L
+//
+// - Tienilo nella STESSA cartella di avatar.html (anche su GitHub Pages).
+// - Il nome deve essere esattamente: audio_sourge.js (tutto minuscolo).
+// - Scrivi il testo tra i backtick. Una riga vuota = nuovo paragrafo (pausa più lunga).
+// - Backtick e \${ vengono protetti automaticamente dall'editor.
+// - Il file viene riletto a ogni pressione di L: salvi, premi L e senti la versione nuova.
+// ============================================================
+window.AUDIO_SOURGE = \`${safeText}\`;
+`;
+
+  const filename = 'audio_sourge.js';
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: 'JavaScript file', accept: { 'text/javascript': ['.js'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(fileContent);
+      await writable.close();
+      flash('✅ SALVATO CORRETTAMENTE COME audio_sourge.js');
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.warn('showSaveFilePicker saltato, utilizzo il download standard', err);
+    }
+  }
+
+  const blob = new Blob([fileContent], { type: 'text/javascript;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  flash('✅ FILE SCARICATO: audio_sourge.js');
+});
+
+function flash(msg) {
+  const el = document.createElement('div');
+  el.className = 'flash';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 2500);
+}
+</script>
+</body>
+</html>
+</textarea>
+
+<script>
+// ============================================================
+// AVATAR OPZIONI — orchestrazione
+// ============================================================
+const SHARED_TABS = ['schedule', 'audio'];
+
+const loaded = new Set();
+let avatarText = '';
+let avatarName = '';
+let avatarVer = 0;
+const tabVer = {};
+
+// --- Scheda corrente: legge il contenuto dal <textarea> invece che da base64 ---
+function getSrc(name) {
+  const el = document.getElementById('src-' + name);
+  if (!el) return '';
+  // riconverto i placeholder usati dentro le schede per non chiudere il <textarea> esterno
+  return el.value.replace(/<\\\/textarea>/g, '</textarea>');
+}
+
+function load(name) {
+  if (loaded.has(name)) return Promise.resolve();
+  return new Promise(resolve => {
+    const f = document.getElementById('f-' + name);
+    f.onload = () => { loaded.add(name); resolve(); };
+    f.srcdoc = getSrc(name);
+  });
+}
+
+// --- Banner warning per blocchi mancanti ---
+function reportMissingBlocks(html) {
+  const missing = [];
+  if (html.indexOf('const AUDIO_CONFIG = {') === -1) missing.push('AUDIO_CONFIG');
+  if (html.indexOf('const SPEECH_VOLUME_CONFIG = {') === -1) missing.push('SPEECH_VOLUME_CONFIG');
+  if (html.indexOf('const MIC_CONFIG = {') === -1) missing.push('MIC_CONFIG');
+  if (html.indexOf('SCHEDULED_EVENTS') === -1) missing.push('SCHEDULED_EVENTS');
+  const bar = document.getElementById('warnBar');
+  if (!missing.length) {
+    bar.classList.remove('show');
+    bar.textContent = '';
+  } else {
+    bar.classList.add('show');
+    bar.innerHTML = '⚠ il file non contiene: <b>' + missing.join('</b>, <b>') + '</b> — alcune schede potrebbero essere vuote.';
+  }
+}
+
+// --- Ricarica le schede condivise quando avatarVer cambia ---
+async function syncTab(name) {
+  if (tabVer[name] === avatarVer) return;
+  if (!avatarText) return;
+  await load(name);
+  const w = document.getElementById('f-' + name).contentWindow;
+  if (w && typeof w.loadSharedAvatar === 'function') {
+    await w.loadSharedAvatar(avatarName, avatarText);
+    tabVer[name] = avatarVer;
+  }
+}
+
+async function activate(name) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'p-' + name));
+
+  const landing = document.getElementById('landing');
+  const sharedBar = document.getElementById('sharedBar');
+  const isSource = name === 'source';
+  landing.hidden = isSource || !!avatarText;
+  sharedBar.style.display = (isSource || !avatarText) ? 'none' : 'flex';
+
+  await load(name);
+
+  if (!isSource && avatarText && tabVer[name] !== avatarVer) {
+    await syncTab(name);
+  }
+}
+
+document.querySelectorAll('.tab').forEach(b => {
+  b.onclick = () => activate(b.dataset.tab);
+});
+
+// --- Caricamento avatar condiviso ---
+async function handleAvatarFile(file) {
+  if (!file) return;
+  avatarName = file.name;
+  avatarText = await file.text();
+  avatarVer++;
+
+  // carica le due schede condivise in parallelo e passa il testo a ciascuna
+  await Promise.all(SHARED_TABS.map(async n => {
+    await load(n);
+    const w = document.getElementById('f-' + n).contentWindow;
+    if (w && typeof w.loadSharedAvatar === 'function') {
+      await w.loadSharedAvatar(avatarName, avatarText);
+      tabVer[n] = avatarVer;
+    }
+  }));
+
+  document.getElementById('status').textContent = '📄 ' + avatarName + ' caricato in entrambe le schede';
+  document.getElementById('saveAll').disabled = false;
+  document.getElementById('landing').hidden = true;
+  document.getElementById('sharedBar').classList.remove('before-load');
+  document.getElementById('sharedBar').style.display = 'flex';
+
+  reportMissingBlocks(avatarText);
+}
+
+document.getElementById('avatarFile').onchange = async e => {
+  await handleAvatarFile(e.target.files[0]);
+  e.target.value = '';
+};
+document.getElementById('landingFile').onchange = async e => {
+  await handleAvatarFile(e.target.files[0]);
+  e.target.value = '';
+};
+
+// --- Ricarica avatar corrente (senza riaprire il file dal disco) ---
+document.getElementById('reloadCurrent').onclick = async () => {
+  if (!avatarText) return;
+  avatarVer++;
+  await Promise.all(SHARED_TABS.map(async n => {
+    const w = document.getElementById('f-' + n).contentWindow;
+    if (w && typeof w.loadSharedAvatar === 'function') {
+      await w.loadSharedAvatar(avatarName, avatarText);
+      tabVer[n] = avatarVer;
+    }
+  }));
+  document.getElementById('status').textContent = '📄 ' + avatarName + ' ricaricato';
+};
+
+// --- Salva tutto: concatena le patch Audio -> Schedule, poi scarica ---
+document.getElementById('saveAll').onclick = async () => {
+  try {
+    await load('audio');
+    await load('schedule');
+    const aw = document.getElementById('f-audio').contentWindow;
+    const sw = document.getElementById('f-schedule').contentWindow;
+
+    if (typeof aw.buildNewHtml !== 'function' || typeof sw.buildNewHtml !== 'function') {
+      alert('Una delle schede non è pronta: ricarica l\'avatar e riprova.');
+      return;
+    }
+
+    // Ordine: prima i volumi/reattività (audio), poi eventi e frasi (schedule).
+    // Ogni patch legge il testo che riceve e riscrive solo i blocchi che le competono.
+    let out = aw.buildNewHtml(avatarText);
+    out = sw.buildNewHtml(out);
+
+    const name = avatarName || 'index.html';
+
+    if (window.showSaveFilePicker) {
+      try {
+        const h = await window.showSaveFilePicker({
+          suggestedName: name,
+          types: [{ description: 'HTML', accept: { 'text/html': ['.html'] } }]
+        });
+        const wr = await h.createWritable();
+        await wr.write(out);
+        await wr.close();
+        refreshSharedState(out);
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+
+    const blob = new Blob([out], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    refreshSharedState(out);
+  } catch (e) {
+    alert('Errore: ' + e.message);
+  }
+};
+
+// Dopo un salvataggio riuscito, allinea lo stato condiviso al file appena generato:
+// così se passi a un'altra scheda vede la versione nuova, non quella caricata all'inizio.
+function refreshSharedState(newHtml) {
+  avatarText = newHtml;
+  avatarVer++;
+  document.getElementById('status').textContent = '💾 salvato: stato aggiornato';
+  reportMissingBlocks(newHtml);
+}
+
+// --- Avvio ---
+activate('schedule');
+</script>
+</body>
+</html>
