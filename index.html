@@ -73,7 +73,14 @@
     text-shadow: 0 0 12px rgba(0,255,136,0.8);
     box-shadow: 0 0 24px rgba(0,255,157,0.18);
     opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    /* NUOVE REGOLE PER IL TESTO LUNGO */
+    max-height: 28vh;
+    overflow-y: auto;
+    word-break: break-word;
+    scrollbar-width: thin;
   }
+  .subtitle::-webkit-scrollbar { width: 4px; }
+  .subtitle::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.5); border-radius: 2px; }
   .subtitle.show { opacity: 1; }
 
   .toast {
@@ -265,7 +272,8 @@
     <button class="mv-close" id="master-vol-close" title="Chiudi">✕</button>
   </div>
   <div class="mv-row">
-    <input type="range" id="master-vol-slider" min="0" max="1.5" step="0.01" value="1">
+    <!-- MODIFICATO: max="3" per arrivare al 300% -->
+    <input type="range" id="master-vol-slider" min="0" max="3" step="0.01" value="1">
     <div class="mv-value" id="master-vol-value">100%</div>
   </div>
   <div class="mv-legend">
@@ -278,7 +286,7 @@
     <span>V / Esc / click fuori per chiudere · R reset</span>
     <button class="mv-reset" id="master-vol-reset">⟲ 100%</button>
   </div>
-  <div class="mv-note">Se una frase è in corso, riparte dal punto in cui eri con il nuovo volume. Il valore resta anche dopo il reload.</div>
+  <div class="mv-note">La voce si ferma al 100% per limiti del browser. Oltre il 100% serve a compensare volumi base bassi. Se una frase è in corso, riparte col nuovo volume.</div>
 </div>
 
 <!-- Pannello Skin (overlay, aperto dal menu ESC) -->
@@ -313,7 +321,7 @@
   <div class="menu-footer">Esc to close</div>
 </div>
 
-<input type="file" id="context-file-input" accept=".js,.txt,.mjs" hidden>
+<input type="file" id="context-file-input" accept=".js,.txt,.mjs,.pdf" hidden>
 
 <script>
 // ============================================================
@@ -593,9 +601,11 @@ const SPEECH_VOLUME_CONFIG = {
 let masterVolume = 1.0;
 try {
   const stored = parseFloat(localStorage.getItem('avatar_master_vol'));
-  if (!isNaN(stored) && stored >= 0 && stored <= 1.5) masterVolume = stored;
+  if (!isNaN(stored) && stored >= 0 && stored <= 3) masterVolume = stored;
 } catch (e) {}
-function vol(base) { return Math.max(0, Math.min(1, base * masterVolume)); }
+
+// MODIFICATO: rimuoviamo il Math.min(1, ...) per permettere moltiplicatori > 1.0
+function vol(base) { return base * masterVolume; }
 
 const SELF_TALK_PHRASES = ["che ore sono?","ho fame","che palle","mi annoio","ancora qui?","quasi ora di staccare","un caffè, dai","basta guardarmi","quanto manca?","che sonno"];
 const AWAKE_EXPRESSIONS = ['neutro','neutro','neutro','felice','annoiato','assonnato','sorpreso'];
@@ -1471,7 +1481,7 @@ function handleButtonClick(id) {
     if (readActive) stopReading(); else startReading();
   } else if (id === 'S') {
     subtitlesOn = !subtitlesOn;
-    if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+    if (subtitlesOn && currentSubtitle) updateSubtitleRealtime(0, currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
     toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
   } else if (id === 'M') {
     muted = !muted;
@@ -1493,6 +1503,60 @@ function handleButtonClick(id) {
       contextFileInput.click();
     }
   }
+}
+
+// ============================================================
+// PDF.JS — caricamento lazy da CDN (pinnato)
+// ============================================================
+const PDFJS_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs';
+const PDFJS_WORKER_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+const CONTEXT_MAX_CHARS = 200000;
+let pdfjsLib = null;
+let pdfjsLoading = null;
+
+async function ensurePdfJs() {
+  if (pdfjsLib) return pdfjsLib;
+  if (pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = (async () => {
+    try {
+      const mod = await import(PDFJS_CDN);
+      mod.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_CDN;
+      pdfjsLib = mod;
+      return mod;
+    } catch (err) {
+      pdfjsLoading = null;
+      throw new Error('Impossibile caricare pdf.js: ' + err.message);
+    }
+  })();
+  return pdfjsLoading;
+}
+
+async function extractPdfText(file) {
+  const lib = await ensurePdfJs();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    let pageText = '';
+    let lastY = null;
+    for (const item of content.items) {
+      if (typeof item.str !== 'string') continue;
+      const y = item.transform ? item.transform[5] : null;
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
+        pageText += '\n';
+      } else if (pageText && !pageText.endsWith(' ')) {
+        pageText += ' ';
+      }
+      pageText += item.str;
+      lastY = y;
+    }
+    pageText = pageText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (pageText) pages.push(pageText);
+  }
+  const text = pages.join('\n\n');
+  return { text, numPages: pdf.numPages, totalChars: text.length };
 }
 
 // ============================================================
@@ -1858,8 +1922,61 @@ let subtitlesOn = false;
 let currentSubtitle = '';
 let subtitleHideTimer = null;
 
-function showSubtitle(text) { currentSubtitle = text; clearTimeout(subtitleHideTimer); if (subtitlesOn && text && text.trim()) { subtitleEl.textContent = text.trim(); subtitleEl.classList.add('show'); } }
-function hideSubtitle(delayMs) { clearTimeout(subtitleHideTimer); subtitleHideTimer = setTimeout(() => { currentSubtitle = ''; subtitleEl.classList.remove('show'); }, delayMs || 0); }
+function updateSubtitleRealtime(charIndex, fullText) {
+  if (!subtitlesOn) return;
+  clearTimeout(subtitleHideTimer);
+
+  let start = charIndex;
+  let end = charIndex;
+
+  // Cerca l'inizio della frase corrente (max 120 caratteri indietro)
+  let lookBehind = 0;
+  while (start > 0 && lookBehind < 120) {
+    if (/[.!?\n]/.test(fullText[start - 1])) break;
+    start--;
+    lookBehind++;
+  }
+
+  // Cerca la fine della frase corrente (max 150 caratteri avanti)
+  let lookAhead = 0;
+  while (end < fullText.length && lookAhead < 150) {
+    if (/[.!?\n]/.test(fullText[end])) {
+      end++;
+      break;
+    }
+    end++;
+    lookAhead++;
+  }
+
+  let displayText = fullText.slice(start, end).trim();
+  
+  // Pulisce gli spazi multipli e i ritorni a capo per la visualizzazione
+  displayText = displayText.replace(/\s+/g, ' ');
+
+  if (start > 0) displayText = '…' + displayText;
+  if (end < fullText.length) displayText += '…';
+
+  subtitleEl.textContent = displayText;
+  subtitleEl.classList.add('show');
+}
+
+// Usata solo per mostrare cose semplici (es. il "..." del caricamento AI)
+function showSubtitle(text) { 
+  currentSubtitle = text; 
+  clearTimeout(subtitleHideTimer); 
+  if (subtitlesOn && text && text.trim()) { 
+    subtitleEl.textContent = text.trim(); 
+    subtitleEl.classList.add('show'); 
+  } 
+}
+
+function hideSubtitle(delayMs) { 
+  clearTimeout(subtitleHideTimer); 
+  subtitleHideTimer = setTimeout(() => { 
+    currentSubtitle = ''; 
+    subtitleEl.classList.remove('show'); 
+  }, delayMs || 0); 
+}
 
 let utterance = null;
 let lastSpeechEnd = 0;
@@ -1869,7 +1986,7 @@ let currentSpeechState = null;
 function speakText(text, baseVolume, onEnd) {
   if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
   if (!text || !text.trim()) { if (onEnd) onEnd(); return; }
-  showSubtitle(text);
+  
   syllables = getSyllables(text); wordsInText = extractWords(text);
   currentSyllableIndex = 0; syllableTimer = 0; framesPerSyllable = 8; wordCursor = 0;
   activeEmotion = 'neutro'; emotionHoldFrames = 0;
@@ -1901,10 +2018,17 @@ function speakText(text, baseVolume, onEnd) {
     currentSpeechState = null;
     if (onEnd) onEnd();
   };
-  utterance.onstart = () => { isSpeaking = true; };
+  
+  utterance.onstart = () => { 
+    isSpeaking = true; 
+    updateSubtitleRealtime(0, text);
+  };
   utterance.onboundary = (e) => {
     if (currentSpeechState) currentSpeechState.charIndex = e.charIndex;
-    if (e.name === 'word') processNextWord();
+    if (e.name === 'word') {
+      processNextWord();
+      updateSubtitleRealtime(e.charIndex, text);
+    }
   };
   utterance.onend = finish; utterance.onerror = finish;
   speechSynthesis.speak(utterance);
@@ -2309,24 +2433,78 @@ function closeHotkeyMenu() { hotkeyMenuOpen = false; hotkeyMenuEl.classList.remo
 contextFileInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
+
+  const isPdf = /\.pdf$/i.test(file.name);
+  const isJs = /\.m?js$/i.test(file.name);
+
   try {
-    const text = await file.text();
-    let extracted = text;
-    if (/\.m?js$/i.test(file.name)) {
+    if (isPdf) {
+      // ---- PDF ----
+      let result;
+      try {
+        toast('📄 extracting ' + file.name + '…');
+        result = await extractPdfText(file);
+      } catch (err) {
+        toast('⚠ ' + err.message, true);
+        contextFileInput.value = '';
+        return;
+      }
+      if (!result.text || result.text.length < 10) {
+        toast('⚠ PDF senza testo estraibile (scansionato?)', true);
+        contextFileInput.value = '';
+        return;
+      }
+      let finalText = result.text;
+      let truncated = false;
+      if (finalText.length > CONTEXT_MAX_CHARS) {
+        finalText = finalText.slice(0, CONTEXT_MAX_CHARS);
+        truncated = true;
+      }
+      customAiContext = finalText;
+      importedFileName = basename(file.name);
+      aiContext = ''; aiContextLoaded = false; aiHistory = [];
+      if (truncated) {
+        toast('📄 ' + importedFileName + ' (' + result.numPages + 'p) — troncato a ' + CONTEXT_MAX_CHARS.toLocaleString('it-IT'));
+      } else {
+        toast('📄 ' + importedFileName + ' (' + result.numPages + 'p, ' + result.totalChars.toLocaleString('it-IT') + ' char)');
+      }
+    } else if (isJs) {
+      // ---- JS / MJS ----
+      const text = await file.text();
+      let extracted = text;
       try {
         const fake = {};
         new Function('window', text)(fake);
         if (typeof fake.AUDIO_SOURGE === 'string') extracted = fake.AUDIO_SOURGE;
         else if (Array.isArray(fake.AUDIO_SOURGE)) extracted = fake.AUDIO_SOURGE.join('\n\n');
       } catch (err) { }
+      let finalText = extracted;
+      let truncated = false;
+      if (finalText.length > CONTEXT_MAX_CHARS) {
+        finalText = finalText.slice(0, CONTEXT_MAX_CHARS);
+        truncated = true;
+      }
+      customAiContext = finalText;
+      importedFileName = basename(file.name);
+      aiContext = ''; aiContextLoaded = false; aiHistory = [];
+      toast('📄 context imported: ' + importedFileName + (truncated ? ' (truncated)' : ''));
+    } else {
+      // ---- TXT / altro testo ----
+      const text = await file.text();
+      let finalText = text;
+      let truncated = false;
+      if (finalText.length > CONTEXT_MAX_CHARS) {
+        finalText = finalText.slice(0, CONTEXT_MAX_CHARS);
+        truncated = true;
+      }
+      customAiContext = finalText;
+      importedFileName = basename(file.name);
+      aiContext = ''; aiContextLoaded = false; aiHistory = [];
+      toast('📄 context imported: ' + importedFileName + (truncated ? ' (truncated)' : ''));
     }
-    customAiContext = extracted;
-    importedFileName = basename(file.name);
-    aiContext = ''; aiContextLoaded = false; aiHistory = [];
-    toast('📄 context imported: ' + importedFileName);
-    contextFileInput.value = '';
     closeHotkeyMenu();
   } catch (err) { toast('⚠ ' + err.message, true); }
+  contextFileInput.value = '';
 });
 
 // ============================================================
@@ -2398,7 +2576,7 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 's' && e.key !== 'S') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   subtitlesOn = !subtitlesOn;
-  if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+  if (subtitlesOn && currentSubtitle) updateSubtitleRealtime(0, currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
   toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
 });
 document.addEventListener('keydown', (e) => {

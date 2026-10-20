@@ -1614,6 +1614,28 @@ window.loadSharedAvatar = async function(name, text) {
   }
   textarea:focus { border-color: #00ff88; box-shadow: 0 0 12px rgba(0,255,136,0.35); }
 
+  /* --- Riquadro opzioni import PDF --- */
+  .pdf-options {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 10px 12px; margin-bottom: 12px;
+    border: 1px solid rgba(0,255,157,0.2); border-radius: 8px;
+    background: rgba(0,255,157,0.02);
+    font-size: 11px; letter-spacing: 1px;
+  }
+  .pdf-options label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .pdf-options input[type="checkbox"] { accent-color: #00ff88; cursor: pointer; }
+  .pdf-options input[type="number"] {
+    width: 100px; background: rgba(0,0,0,0.4); color: #00ff88;
+    border: 1px solid rgba(0,255,157,0.3); border-radius: 6px;
+    padding: 6px 8px; font-family: inherit; font-size: 12px; outline: none;
+  }
+  .pdf-options input[type="number"]:focus { border-color: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.35); }
+  .pdf-options .hint { font-size: 10px; opacity: 0.55; letter-spacing: 0.5px; }
+  .pdf-options.disabled { opacity: 0.45; pointer-events: none; }
+
+  .char-count { font-size: 10px; opacity: 0.6; letter-spacing: 1px; margin-top: 8px; }
+  .char-count.warn { color: #ffcc44; opacity: 0.9; }
+
   .output {
     margin-top: 20px; padding: 20px; border: 1px solid rgba(0,255,157,0.3); border-radius: 10px;
     background: rgba(0,255,157,0.05); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -1641,8 +1663,8 @@ window.loadSharedAvatar = async function(name, text) {
   <section class="loader" id="loaderSection">
     <p>Seleziona un file esistente o parti da zero</p>
     <label class="file-btn">
-      <input type="file" accept=".txt,.js,.mjs" id="fileInput" hidden>
-      📁 APRI FILE (.TXT o .JS)
+      <input type="file" accept=".txt,.js,.mjs,.pdf" id="fileInput" hidden>
+      📁 APRI FILE (.TXT, .JS, .PDF)
     </label>
     <p class="hint">Oppure <a href="#" id="skipLink" style="color: #00ffaa; text-decoration: underline; cursor: pointer;">scrivi direttamente da zero</a></p>
   </section>
@@ -1659,9 +1681,21 @@ window.loadSharedAvatar = async function(name, text) {
         <span class="card-title">TESTO LETTO DALL'AVATAR (Tasto L)</span>
       </div>
       <p class="desc">
-        Modifica liberamente il testo. Punteggiatura e spaziatura normale verranno gestite automaticamente dal tool al momento del salvataggio nel formato corretto.
+        Modifica liberamente il testo. Puoi importare anche un PDF: il testo verrà estratto automaticamente. Punteggiatura e spaziatura normale verranno gestite al momento del salvataggio nel formato corretto.
       </p>
+
+      <div class="pdf-options" id="pdfOptions">
+        <label>
+          <input type="checkbox" id="truncatePdf">
+          <span>Tronca PDF a</span>
+        </label>
+        <input type="number" id="truncateLimit" value="200000" min="1000" step="1000">
+        <span>caratteri</span>
+        <span class="hint">(spento = testo integrale. Consigliato se usi Groq)</span>
+      </div>
+
       <textarea id="textArea" placeholder="Scrivi o incolla qui il testo..."><\/textarea>
+      <div class="char-count" id="charCount">0 caratteri</div>
     </div>
 
     <div class="output">
@@ -1680,11 +1714,95 @@ const clearBtn = document.getElementById('clearBtn');
 const textArea = document.getElementById('textArea');
 const loadedName = document.getElementById('loadedName');
 const generateBtn = document.getElementById('generateBtn');
+const charCount = document.getElementById('charCount');
+const pdfOptions = document.getElementById('pdfOptions');
+const truncatePdf = document.getElementById('truncatePdf');
+const truncateLimit = document.getElementById('truncateLimit');
 
+// Aggiorna contatore caratteri e stato del riquadro PDF
+function updateCharCount() {
+  const n = textArea.value.length;
+  charCount.textContent = n.toLocaleString('it-IT') + ' caratteri';
+  const limit = parseInt(truncateLimit.value, 10) || 200000;
+  charCount.classList.toggle('warn', n > limit);
+}
+
+textArea.addEventListener('input', updateCharCount);
+truncateLimit.addEventListener('input', updateCharCount);
+
+// Abilita/disabilita il campo numerico in base alla checkbox
+function syncPdfOptionsState() {
+  pdfOptions.classList.toggle('disabled', !truncatePdf.checked);
+}
+truncatePdf.addEventListener('change', syncPdfOptionsState);
+syncPdfOptionsState();
+
+// ============================================================
+// PDF.JS — caricamento lazy da CDN (pinnato)
+// ============================================================
+const PDFJS_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs';
+const PDFJS_WORKER_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+let pdfjsLib = null;
+let pdfjsLoading = null;
+
+async function ensurePdfJs() {
+  if (pdfjsLib) return pdfjsLib;
+  if (pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = (async () => {
+    try {
+      const mod = await import(PDFJS_CDN);
+      mod.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_CDN;
+      pdfjsLib = mod;
+      return mod;
+    } catch (err) {
+      pdfjsLoading = null;
+      throw new Error('Impossibile caricare pdf.js: ' + err.message);
+    }
+  })();
+  return pdfjsLoading;
+}
+
+async function extractPdfText(file) {
+  const lib = await ensurePdfJs();
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await lib.getDocument({ data: arrayBuffer }).promise;
+  const pages = [];
+  let totalChars = 0;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    let pageText = '';
+    let lastY = null;
+    for (const item of content.items) {
+      if (typeof item.str !== 'string') continue;
+      // Aggiunge uno spazio quando cambia riga (approssimativo)
+      const y = item.transform ? item.transform[5] : null;
+      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
+        pageText += '\n';
+      } else if (pageText && !pageText.endsWith(' ')) {
+        pageText += ' ';
+      }
+      pageText += item.str;
+      lastY = y;
+    }
+    pageText = pageText.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (pageText) {
+      pages.push(pageText);
+      totalChars += pageText.length;
+    }
+  }
+  const text = pages.join('\n\n');
+  return { text, numPages: pdf.numPages, totalChars: text.length };
+}
+
+// ============================================================
+// APERTURA / CHIUSURA EDITOR
+// ============================================================
 function openEditor(name = 'Nuovo testo') {
   loadedName.textContent = '📄 ' + name;
   loaderSection.hidden = true;
   editorSection.hidden = false;
+  updateCharCount();
 }
 
 skipLink.addEventListener('click', (e) => {
@@ -1698,13 +1816,61 @@ reloadLoaderBtn.addEventListener('click', () => {
   loaderSection.hidden = false;
 });
 
+// ============================================================
+// HANDLER FILE
+// ============================================================
 fileInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  try {
-    let content = await file.text();
 
-    if (/\.m?js$/i.test(file.name)) {
+  const isPdf = /\.pdf$/i.test(file.name);
+  const isJs = /\.m?js$/i.test(file.name);
+
+  try {
+    if (isPdf) {
+      // ---- PDF ----
+      let result;
+      try {
+        flash('📄 Estrazione testo dal PDF…');
+        result = await extractPdfText(file);
+      } catch (err) {
+        alert('Errore nell\'estrazione del PDF:\n' + err.message);
+        fileInput.value = '';
+        return;
+      }
+
+      if (!result.text || result.text.length < 10) {
+        alert(
+          '⚠ Questo PDF non contiene testo estraibile.\n\n' +
+          'Probabilmente è un PDF scansionato (immagini) o protetto.\n' +
+          'Servirebbe un OCR, non supportato da questo editor.\n\n' +
+          'Prova con un PDF di testo normale, oppure incolla il testo manualmente.'
+        );
+        fileInput.value = '';
+        return;
+      }
+
+      // Applica eventuale troncatura
+      let finalText = result.text;
+      let truncated = false;
+      if (truncatePdf.checked) {
+        const limit = parseInt(truncateLimit.value, 10) || 200000;
+        if (finalText.length > limit) {
+          finalText = finalText.slice(0, limit);
+          truncated = true;
+        }
+      }
+
+      textArea.value = finalText;
+      openEditor(file.name + ' (' + result.numPages + ' pagine)');
+      if (truncated) {
+        flash('📄 PDF troncato: ' + limit.toLocaleString('it-IT') + '/' + result.totalChars.toLocaleString('it-IT') + ' caratteri');
+      } else {
+        flash('📄 PDF estratto: ' + result.totalChars.toLocaleString('it-IT') + ' caratteri');
+      }
+    } else if (isJs) {
+      // ---- JS / MJS ----
+      let content = await file.text();
       try {
         const fake = {};
         new Function('window', content)(fake);
@@ -1712,19 +1878,27 @@ fileInput.addEventListener('change', async (e) => {
         if (Array.isArray(src)) content = src.join('\n\n');
         else if (typeof src === 'string') content = src;
       } catch (e) { /* se non è eseguibile lascio il testo com'è */ }
+      textArea.value = content;
+      openEditor(file.name);
+    } else {
+      // ---- TXT / altro testo ----
+      const content = await file.text();
+      textArea.value = content;
+      openEditor(file.name);
     }
-
-    textArea.value = content;
-    openEditor(file.name);
   } catch (err) {
     alert('Errore di lettura del file: ' + err.message);
   }
   fileInput.value = '';
 });
 
+// ============================================================
+// AZIONI
+// ============================================================
 clearBtn.addEventListener('click', () => {
   if (confirm('Vuoi davvero cancellare tutto il testo?')) {
     textArea.value = '';
+    updateCharCount();
   }
 });
 
