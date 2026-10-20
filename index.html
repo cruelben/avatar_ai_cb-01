@@ -26,10 +26,7 @@
   body.ai-mode { background-color: #001a10; }
   body.ai-mode .crt-overlay { opacity: 0.7; }
 
-  /* Quando è attiva una skin NON-default, ripuliamo gli strati verdi originali */
-  body.skin-themed {
-    background-image: none !important;
-  }
+  body.skin-themed { background-image: none !important; }
   body.skin-themed .crt-overlay { display: none !important; }
   body.skin-themed .avatar-container { background: none !important; box-shadow: none !important; }
   body.skin-themed .avatar-container.speaking { box-shadow: none !important; }
@@ -109,6 +106,7 @@
     display: flex; justify-content: space-between; align-items: center;
     background: transparent; border: 1px solid transparent; padding: 4px 8px; border-radius: 6px; cursor: pointer;
     font-family: inherit; font-size: 12px; letter-spacing: 1px; transition: all 0.15s;
+    color: #00ff88;
   }
   .menu-btn:hover { background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.3); }
   .menu-btn .key {
@@ -123,119 +121,129 @@
   .menu-link:hover { background: rgba(0,255,136,0.1); }
   .menu-version { font-size: 11px; color: rgba(0,255,157,0.75); padding: 4px 8px; letter-spacing: 2px; }
 
+  /* ===== MASTER VOLUME PANEL (V) ===== */
+  #master-vol-panel {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 45;
+    background: rgba(0,15,9,0.96);
+    border: 1px solid rgba(0,255,157,0.55);
+    border-radius: 14px;
+    padding: 22px 26px 18px;
+    box-shadow: 0 0 50px rgba(0,255,157,0.35), inset 0 0 40px rgba(0,255,157,0.04);
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    min-width: min(420px, 88vw);
+    max-width: 560px;
+  }
+  #master-vol-panel.show { display: flex; }
+  #master-vol-panel .mv-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,255,157,0.25);
+  }
+  #master-vol-panel .mv-title {
+    font-size: 12px; letter-spacing: 4px; color: #00ffaa; text-transform: uppercase; font-weight: bold;
+  }
+  #master-vol-panel .mv-title span { color: rgba(0,255,157,0.5); margin-left: 8px; font-size: 10px; letter-spacing: 1px; }
+  #master-vol-panel .mv-close {
+    background: transparent; border: 1px solid rgba(0,255,157,0.4); color: #00ff88;
+    width: 30px; height: 30px; border-radius: 7px; cursor: pointer; font-size: 14px; font-family: inherit;
+    transition: all 0.15s;
+  }
+  #master-vol-panel .mv-close:hover { background: rgba(0,255,136,0.15); border-color: rgba(0,255,136,0.7); }
+
+  #master-vol-panel .mv-row { display: flex; align-items: center; gap: 14px; }
+  #master-vol-panel input[type="range"] {
+    flex: 1; accent-color: #00ff88; cursor: pointer; height: 28px;
+  }
+  #master-vol-panel .mv-value {
+    font-size: 20px; font-weight: bold; color: #00ff88;
+    letter-spacing: 1px; min-width: 72px; text-align: right;
+    text-shadow: 0 0 10px rgba(0,255,136,0.6);
+    font-variant-numeric: tabular-nums;
+  }
+  #master-vol-panel .mv-legend {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 10px; letter-spacing: 1.5px;
+    color: rgba(0,255,157,0.55);
+  }
+  #master-vol-panel .mv-legend b { color: #00ffaa; font-weight: bold; }
+  #master-vol-panel .mv-footer {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    font-size: 10px; letter-spacing: 1.2px; color: rgba(0,255,157,0.5);
+  }
+  #master-vol-panel .mv-reset {
+    background: transparent; border: 1px solid rgba(0,255,157,0.4); color: #00ff88;
+    padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: inherit;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    transition: all 0.15s;
+  }
+  #master-vol-panel .mv-reset:hover { background: rgba(0,255,136,0.15); border-color: rgba(0,255,136,0.7); }
+  #master-vol-panel .mv-note {
+    font-size: 9px; letter-spacing: 0.8px; line-height: 1.4;
+    color: rgba(0,255,157,0.45); text-align: center;
+    border-top: 1px solid rgba(0,255,157,0.15); padding-top: 8px; margin-top: 2px;
+  }
+
   /* ===== SKIN PANEL ===== */
   #skin-panel {
     position: fixed; inset: 0; z-index: 50;
     background: rgba(0,0,0,0.78);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    display: none; align-items: center; justify-content: center; padding: 20px;
   }
   #skin-panel.show { display: flex; }
-
   #skin-panel-inner {
     background: rgba(0,15,9,0.98);
     border: 1px solid rgba(0,255,157,0.5);
-    border-radius: 16px;
-    padding: 22px;
-    width: 100%;
-    max-width: 760px;
-    max-height: 82vh;
-    display: flex;
-    flex-direction: column;
+    border-radius: 16px; padding: 22px; width: 100%; max-width: 760px; max-height: 82vh;
+    display: flex; flex-direction: column;
     box-shadow: 0 0 60px rgba(0,255,157,0.3), inset 0 0 40px rgba(0,255,157,0.04);
   }
   #skin-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid rgba(0,255,157,0.3);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(0,255,157,0.3);
   }
   #skin-panel-header h2 {
-    font-size: 14px;
-    letter-spacing: 4px;
-    color: #00ffaa;
-    text-transform: uppercase;
-    font-weight: bold;
+    font-size: 14px; letter-spacing: 4px; color: #00ffaa; text-transform: uppercase; font-weight: bold;
   }
   #skin-panel-header h2 span { color: rgba(0,255,157,0.5); margin-left: 8px; font-size: 11px; letter-spacing: 1px; }
   #skin-panel-close {
-    background: transparent;
-    border: 1px solid rgba(0,255,157,0.4);
-    color: #00ff88;
-    width: 34px;
-    height: 34px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    font-family: inherit;
+    background: transparent; border: 1px solid rgba(0,255,157,0.4); color: #00ff88;
+    width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 16px; font-family: inherit;
     transition: all 0.15s;
   }
-  #skin-panel-close:hover {
-    background: rgba(0,255,136,0.15);
-    border-color: rgba(0,255,136,0.7);
-  }
+  #skin-panel-close:hover { background: rgba(0,255,136,0.15); border-color: rgba(0,255,136,0.7); }
   #skin-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 8px;
-    overflow-y: auto;
-    padding-right: 6px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px;
+    overflow-y: auto; padding-right: 6px;
   }
   #skin-grid::-webkit-scrollbar { width: 6px; }
   #skin-grid::-webkit-scrollbar-thumb { background: rgba(0,255,136,0.3); border-radius: 4px; }
-
   .skin-card {
-    background: rgba(0,255,136,0.05);
-    border: 1px solid rgba(0,255,157,0.3);
-    color: rgba(0,255,157,0.9);
-    padding: 10px 8px 8px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 12px;
-    letter-spacing: 0.5px;
-    text-align: center;
-    transition: all 0.15s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+    background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,157,0.3); color: rgba(0,255,157,0.9);
+    padding: 10px 8px 8px; border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 12px;
+    letter-spacing: 0.5px; text-align: center; transition: all 0.15s ease;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
   }
-  .skin-card:hover {
-    background: rgba(0,255,136,0.15);
-    border-color: rgba(0,255,136,0.7);
-    transform: translateY(-2px);
-  }
+  .skin-card:hover { background: rgba(0,255,136,0.15); border-color: rgba(0,255,136,0.7); transform: translateY(-2px); }
   .skin-card.active {
-    background: rgba(0,255,136,0.28);
-    border-color: #00ff88;
-    color: #ffffff;
+    background: rgba(0,255,136,0.28); border-color: #00ff88; color: #ffffff;
     box-shadow: 0 0 18px rgba(0,255,136,0.5);
   }
   .skin-card .dot {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.25);
-    margin-bottom: 2px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.25);
+    margin-bottom: 2px; box-shadow: 0 0 10px rgba(0,0,0,0.3);
   }
-  .skin-card .cat {
-    display: block;
-    font-size: 9px;
-    opacity: 0.6;
-    letter-spacing: 0.3px;
-  }
+  .skin-card .cat { display: block; font-size: 9px; opacity: 0.6; letter-spacing: 0.3px; }
 
   @media (max-width: 600px) {
     #skin-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
     .skin-card { font-size: 10px; padding: 8px 4px 6px; }
     .skin-card .dot { width: 20px; height: 20px; }
+    #master-vol-panel { padding: 16px 16px 14px; }
   }
 </style>
 </head>
@@ -249,6 +257,29 @@
 
 <div class="subtitle" id="subtitle"></div>
 <div class="toast" id="toast"></div>
+
+<!-- Pannello Master Volume (V) -->
+<div id="master-vol-panel">
+  <div class="mv-head">
+    <div class="mv-title">MASTER VOLUME <span>A · T · L</span></div>
+    <button class="mv-close" id="master-vol-close" title="Chiudi">✕</button>
+  </div>
+  <div class="mv-row">
+    <input type="range" id="master-vol-slider" min="0" max="1.5" step="0.01" value="1">
+    <div class="mv-value" id="master-vol-value">100%</div>
+  </div>
+  <div class="mv-legend">
+    <span><b>A</b> ai+ctx</span>
+    <span><b>T</b> ai</span>
+    <span><b>L</b> read</span>
+    <span id="master-vol-base">base: A 0.90 · T 0.90 · L 0.85</span>
+  </div>
+  <div class="mv-footer">
+    <span>V / Esc / click fuori per chiudere · R reset</span>
+    <button class="mv-reset" id="master-vol-reset">⟲ 100%</button>
+  </div>
+  <div class="mv-note">Se una frase è in corso, riparte dal punto in cui eri con il nuovo volume. Il valore resta anche dopo il reload.</div>
+</div>
 
 <!-- Pannello Skin (overlay, aperto dal menu ESC) -->
 <div id="skin-panel">
@@ -265,6 +296,9 @@
 <div id="hotkey-menu">
   <h3>SKIN</h3>
   <button class="menu-btn" id="hk-skin"><span class="key">K</span><span class="label">apri selettore skin</span></button>
+
+  <h3>VOLUME</h3>
+  <button class="menu-btn" id="hk-volume"><span class="key">V</span><span class="label">master volume A/T/L</span></button>
 
   <h3>AI PROVIDER</h3>
   <button class="menu-btn" id="hk-provider"><span class="key">G</span><span class="label" id="provider-label">Switch to Groq</span></button>
@@ -543,8 +577,25 @@ const MOOD_CONFIG = {
 const AUDIO_CONFIG = {
   chirpVolume: 0.026, greetVolume: 0.025, yawnVolume: 0.114,
   selfTalkVolume: 0.4, lowVolume: 0.4, scheduledVolume: 0.85,
-  readVolume: 0.85, enabled: true
+  enabled: true
 };
+
+// Volumi base delle tre modalità vocali principali (A / T / L).
+// Regolabili da avatar_opzioni.html (tab Audio).
+// In runtime vengono scalati da masterVolume (tasto V).
+const SPEECH_VOLUME_CONFIG = {
+  aiContextVolume: 0.9,    // modalità A
+  aiNoContextVolume: 0.9,  // modalità T
+  readVolume: 0.85         // modalità L
+};
+
+// Master runtime (tasto V). Persistito in localStorage: 1.0 = default.
+let masterVolume = 1.0;
+try {
+  const stored = parseFloat(localStorage.getItem('avatar_master_vol'));
+  if (!isNaN(stored) && stored >= 0 && stored <= 1.5) masterVolume = stored;
+} catch (e) {}
+function vol(base) { return Math.max(0, Math.min(1, base * masterVolume)); }
 
 const SELF_TALK_PHRASES = ["che ore sono?","ho fame","che palle","mi annoio","ancora qui?","quasi ora di staccare","un caffè, dai","basta guardarmi","quanto manca?","che sonno"];
 const AWAKE_EXPRESSIONS = ['neutro','neutro','neutro','felice','annoiato','assonnato','sorpreso'];
@@ -591,10 +642,18 @@ const subtitleEl = document.getElementById('subtitle');
 const hkMicDebug = document.getElementById('hk-mic-debug');
 const hkProvider = document.getElementById('hk-provider');
 const hkSkin = document.getElementById('hk-skin');
+const hkVolume = document.getElementById('hk-volume');
 const providerLabel = document.getElementById('provider-label');
 const skinPanel = document.getElementById('skin-panel');
 const skinPanelClose = document.getElementById('skin-panel-close');
 const skinGrid = document.getElementById('skin-grid');
+
+const masterVolPanel = document.getElementById('master-vol-panel');
+const masterVolSlider = document.getElementById('master-vol-slider');
+const masterVolValue = document.getElementById('master-vol-value');
+const masterVolClose = document.getElementById('master-vol-close');
+const masterVolReset = document.getElementById('master-vol-reset');
+const masterVolBase = document.getElementById('master-vol-base');
 
 // Popola griglia skin
 Object.keys(SKINS).forEach(key => {
@@ -623,6 +682,73 @@ skinPanel.addEventListener('click', (e) => {
 
 // All'avvio: SEMPRE default (niente persistenza)
 applySkin('default');
+
+// ============================================================
+// MASTER VOLUME PANEL (V)
+// ============================================================
+function refreshMasterVolUI() {
+  const pct = Math.round(masterVolume * 100);
+  masterVolSlider.value = masterVolume;
+  masterVolValue.textContent = pct + '%';
+  masterVolBase.textContent = 'base: A ' + SPEECH_VOLUME_CONFIG.aiContextVolume.toFixed(2)
+    + ' · T ' + SPEECH_VOLUME_CONFIG.aiNoContextVolume.toFixed(2)
+    + ' · L ' + SPEECH_VOLUME_CONFIG.readVolume.toFixed(2);
+}
+function openMasterVolPanel() {
+  if (masterVolPanel.classList.contains('show')) return;
+  closeHotkeyMenu();
+  refreshMasterVolUI();
+  masterVolPanel.classList.add('show');
+}
+function closeMasterVolPanel() {
+  masterVolPanel.classList.remove('show');
+}
+let masterVolSaveTimer = null;
+let masterVolToastTimer = null;
+let masterVolRestartTimer = null;
+masterVolSlider.addEventListener('input', (e) => {
+  masterVolume = parseFloat(e.target.value);
+  masterVolValue.textContent = Math.round(masterVolume * 100) + '%';
+
+  // salva su localStorage (debounce 300ms per non scrivere a ogni pixel di drag)
+  clearTimeout(masterVolSaveTimer);
+  masterVolSaveTimer = setTimeout(() => {
+    try { localStorage.setItem('avatar_master_vol', String(masterVolume)); } catch (err) {}
+  }, 300);
+
+  // toast leggero col valore corrente (debounce 200ms)
+  clearTimeout(masterVolToastTimer);
+  masterVolToastTimer = setTimeout(() => {
+    toast('🔊 master ' + Math.round(masterVolume * 100) + '%');
+  }, 200);
+
+  // se sta parlando, riparte col nuovo volume (debounce 250ms per non fare raffiche)
+  if (isSpeaking && currentSpeechState) {
+    clearTimeout(masterVolRestartTimer);
+    masterVolRestartTimer = setTimeout(() => {
+      restartCurrentSpeechAtNewVolume();
+    }, 250);
+  }
+});
+masterVolClose.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeMasterVolPanel();
+});
+masterVolReset.addEventListener('click', (e) => {
+  e.stopPropagation();
+  masterVolume = 1.0;
+  try { localStorage.setItem('avatar_master_vol', '1'); } catch (err) {}
+  refreshMasterVolUI();
+  toast('🔊 master 100%');
+  if (isSpeaking && currentSpeechState) {
+    clearTimeout(masterVolRestartTimer);
+    restartCurrentSpeechAtNewVolume();
+  }
+});
+// Click fuori dal pannello: chiude
+masterVolPanel.addEventListener('click', (e) => {
+  if (e.target === masterVolPanel) closeMasterVolPanel();
+});
 
 // ============================================================
 // HELPERS
@@ -1345,7 +1471,6 @@ function handleButtonClick(id) {
     if (readActive) stopReading(); else startReading();
   } else if (id === 'S') {
     subtitlesOn = !subtitlesOn;
-    try { localStorage.setItem('avatar_subs', subtitlesOn ? '1' : '0'); } catch (err) {}
     if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
     toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
   } else if (id === 'M') {
@@ -1717,50 +1842,101 @@ function checkScheduledEvents() {
 function fireScheduledEvent(ev) {
   if (document.hidden) return;
   stopSpeaking();
-  const vol = ev.volume === 'low' ? AUDIO_CONFIG.lowVolume : AUDIO_CONFIG.scheduledVolume;
+  const baseVol = ev.volume === 'low' ? AUDIO_CONFIG.lowVolume : AUDIO_CONFIG.scheduledVolume;
   const safetyMs = ev.sequence ? Math.max(45000, ev.sequence.length * 3500) : 15000;
   const returnToAwake = () => { if (currentMood === 'talking') enterState('awake', 0); };
   enterState('talking', 0);
-  setTimeout(() => { if (ev.text) speakText(ev.text, vol, returnToAwake); else if (ev.sequence) speakSequence(ev.sequence, vol, returnToAwake); else returnToAwake(); }, 300);
+  setTimeout(() => { if (ev.text) speakText(ev.text, baseVol, returnToAwake); else if (ev.sequence) speakSequence(ev.sequence, baseVol, returnToAwake); else returnToAwake(); }, 300);
   setTimeout(() => { if (currentMood === 'talking') { stopSpeaking(); returnToAwake(); } }, safetyMs);
 }
 
 // ============================================================
 // SPEECH
 // ============================================================
+// I sottotitoli partono SEMPRE spenti: niente persistenza, il tasto S è solo per la sessione.
 let subtitlesOn = false;
 let currentSubtitle = '';
 let subtitleHideTimer = null;
-try { if (localStorage.getItem('avatar_subs') === '1') subtitlesOn = true; } catch (e) {}
 
 function showSubtitle(text) { currentSubtitle = text; clearTimeout(subtitleHideTimer); if (subtitlesOn && text && text.trim()) { subtitleEl.textContent = text.trim(); subtitleEl.classList.add('show'); } }
 function hideSubtitle(delayMs) { clearTimeout(subtitleHideTimer); subtitleHideTimer = setTimeout(() => { currentSubtitle = ''; subtitleEl.classList.remove('show'); }, delayMs || 0); }
 
 let utterance = null;
 let lastSpeechEnd = 0;
-function speakText(text, volume, onEnd) {
+// Stato della frase in corso: serve per ripartire al volo quando cambia il master volume
+let currentSpeechState = null;
+
+function speakText(text, baseVolume, onEnd) {
   if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
   if (!text || !text.trim()) { if (onEnd) onEnd(); return; }
   showSubtitle(text);
   syllables = getSyllables(text); wordsInText = extractWords(text);
   currentSyllableIndex = 0; syllableTimer = 0; framesPerSyllable = 8; wordCursor = 0;
   activeEmotion = 'neutro'; emotionHoldFrames = 0;
+
+  const effectiveVolume = Math.max(0, Math.min(1, vol(baseVolume)));
+
+  currentSpeechState = {
+    text: text,
+    baseVolume: baseVolume,
+    onEnd: onEnd,
+    charIndex: 0,
+    startedAt: Date.now()
+  };
+
   utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = getBrowserSpeechLanguage(); utterance.rate = 0.95;
   const maleKeywords = ['male', 'uomo', 'maschile', 'cosimo', 'diego', 'luca', 'paolo', 'roberto', 'andrea'];
   const isMale = selectedVoice && maleKeywords.some(k => (selectedVoice.name || '').toLowerCase().includes(k));
   utterance.pitch = isMale ? 1.0 : 0.7;
-  utterance.volume = muted ? 0 : 1.0;
+  utterance.volume = muted ? 0 : effectiveVolume;
   if (selectedVoice) utterance.voice = selectedVoice;
   let ended = false;
-  const finish = () => { if (ended) return; ended = true; isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro'; lastSpeechEnd = Date.now(); hideSubtitle(700); if (onEnd) onEnd(); };
+  const finish = () => {
+    if (ended) return;
+    ended = true;
+    isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro';
+    lastSpeechEnd = Date.now();
+    hideSubtitle(700);
+    currentSpeechState = null;
+    if (onEnd) onEnd();
+  };
   utterance.onstart = () => { isSpeaking = true; };
-  utterance.onboundary = (e) => { if (e.name === 'word') processNextWord(); };
-  utterance.onend = finish; utterance.onerror = finish; speechSynthesis.speak(utterance);
+  utterance.onboundary = (e) => {
+    if (currentSpeechState) currentSpeechState.charIndex = e.charIndex;
+    if (e.name === 'word') processNextWord();
+  };
+  utterance.onend = finish; utterance.onerror = finish;
+  speechSynthesis.speak(utterance);
 }
-function speakSequence(seq, volume, onDone) {
+
+// Riparte la frase in corso dal punto in cui eravamo, con il nuovo master volume.
+// Applica guardie: non riparte se siamo troppo all'inizio o troppo alla fine.
+function restartCurrentSpeechAtNewVolume() {
+  if (!currentSpeechState || !isSpeaking) return;
+  const st = currentSpeechState;
+  const elapsed = Date.now() - st.startedAt;
+  if (elapsed < 400) return;
+  const remaining = st.text.length - st.charIndex;
+  if (remaining < 15) return;
+
+  // Arretra all'inizio della parola corrente per non tagliarla a metà
+  let restartAt = st.charIndex;
+  while (restartAt > 0 && /\S/.test(st.text[restartAt - 1])) restartAt--;
+  const newText = st.text.slice(restartAt).trimStart();
+  if (!newText) return;
+
+  const savedOnEnd = st.onEnd;
+  const savedBase = st.baseVolume;
+  speechSynthesis.cancel();
+  setTimeout(() => {
+    speakText(newText, savedBase, savedOnEnd);
+  }, 40);
+}
+
+function speakSequence(seq, baseVolume, onDone) {
   let i = 0;
-  function next() { if (i >= seq.length) { if (onDone) onDone(); return; } const text = seq[i++]; if (!text || !text.trim()) { setTimeout(next, 500); return; } speakText(text, volume, () => { setTimeout(next, 550); }); }
+  function next() { if (i >= seq.length) { if (onDone) onDone(); return; } const text = seq[i++]; if (!text || !text.trim()) { setTimeout(next, 500); return; } speakText(text, baseVolume, () => { setTimeout(next, 550); }); }
   next();
 }
 let readActive = false, readSession = 0, readLoading = false;
@@ -1768,6 +1944,7 @@ function stopSpeaking() {
   readActive = false; readSession++;
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro';
+  currentSpeechState = null;
 }
 
 // ============================================================
@@ -1820,6 +1997,7 @@ function stopReading() {
   readActive = false; readSession++;
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   hideSubtitle(0); isSpeaking = false; targetMouthOpen = 0; activeEmotion = 'neutro';
+  currentSpeechState = null;
   if (!aiMode && currentMood === 'talking') enterState('awake', 0);
   toast('📖 reading interrupted');
 }
@@ -1845,7 +2023,7 @@ async function startReading() {
     if (i >= chunks.length) { readActive = false; setTimeout(() => { if (!aiMode && currentMood === 'talking') enterState('awake', 0); toast('📖 end of reading'); }, 400); return; }
     const c = chunks[i++]; const watchdogMs = 15000 + c.text.length * 250;
     const watchdog = setTimeout(() => { if (readActive && my === readSession) speechSynthesis.cancel(); }, watchdogMs);
-    speakText(c.text, AUDIO_CONFIG.readVolume, () => { clearTimeout(watchdog); if (!readActive || my !== readSession) return; setTimeout(next, c.pause); });
+    speakText(c.text, SPEECH_VOLUME_CONFIG.readVolume, () => { clearTimeout(watchdog); if (!readActive || my !== readSession) return; setTimeout(next, c.pause); });
   };
   setTimeout(next, 300);
 }
@@ -1875,6 +2053,7 @@ function pointFromEvent(e) {
 }
 document.body.addEventListener('click', (e) => {
   if (e.target.closest('#skin-panel')) return;
+  if (e.target.closest('#master-vol-panel')) return;
   const p = pointFromEvent(e);
   if (p) {
     const id = hitTestButtons(p.canvasX, p.canvasY);
@@ -1884,6 +2063,7 @@ document.body.addEventListener('click', (e) => {
 }, true);
 document.body.addEventListener('touchstart', function(e) {
   if (e.target.closest('#skin-panel')) return;
+  if (e.target.closest('#master-vol-panel')) return;
   if (e.target.closest('.menu-btn') || e.target.closest('#hotkey-menu')) return;
   const p = pointFromEvent(e);
   if (p) {
@@ -2060,7 +2240,8 @@ async function askAI(userText) {
     }
     aiHistory.push({ role: 'model', parts: [{ text: reply }] });
     aiProcessing = false;
-    speakText(reply, 0.9, () => { setTimeout(() => { if (aiMode) enterState('awake', 0); }, 500); });
+    const aiVolBase = aiWithContext ? SPEECH_VOLUME_CONFIG.aiContextVolume : SPEECH_VOLUME_CONFIG.aiNoContextVolume;
+    speakText(reply, aiVolBase, () => { setTimeout(() => { if (aiMode) enterState('awake', 0); }, 500); });
   } catch (err) {
     aiProcessing = false; aiHistory.pop(); console.error('AI Error:', err);
     showSubtitle('⚠ ' + err.message); hideSubtitle(3000); toast('⚠ ' + err.message, true);
@@ -2117,6 +2298,7 @@ function updateHotkeyMenu() {
   hkMicDebug.classList.toggle('active', micDebug);
   hkProvider.classList.toggle('active', aiProvider === 'groq');
   providerLabel.textContent = aiProvider === 'gemini' ? 'Switch to Groq' : 'Switch to Gemini';
+  hkVolume.classList.toggle('active', masterVolPanel.classList.contains('show'));
 }
 function openHotkeyMenu() { hotkeyMenuOpen = true; updateHotkeyMenu(); hotkeyMenuEl.classList.add('show'); }
 function closeHotkeyMenu() { hotkeyMenuOpen = false; hotkeyMenuEl.classList.remove('show'); }
@@ -2173,8 +2355,34 @@ document.addEventListener('keydown', (e) => {
   if (!aiMode) { enterAiMode(false); return; }
   if (aiTextInputOpen) closeAiTextInput(); else openAiTextInput();
 });
+// V — master volume
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.key !== 'v' && e.key !== 'V') return;
+  e.preventDefault();
+  if (masterVolPanel.classList.contains('show')) closeMasterVolPanel();
+  else openMasterVolPanel();
+});
+// R — reset rapido master a 100%
+document.addEventListener('keydown', (e) => {
+  if (isTypingInField()) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if (e.key !== 'r' && e.key !== 'R') return;
+  if (masterVolume === 1.0 && !masterVolPanel.classList.contains('show')) return;
+  e.preventDefault();
+  masterVolume = 1.0;
+  try { localStorage.setItem('avatar_master_vol', '1'); } catch (err) {}
+  if (masterVolPanel.classList.contains('show')) refreshMasterVolUI();
+  toast('🔊 master 100%');
+  if (isSpeaking && currentSpeechState) {
+    clearTimeout(masterVolRestartTimer);
+    restartCurrentSpeechAtNewVolume();
+  }
+});
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return; if (isTypingInField()) return;
+  if (masterVolPanel.classList.contains('show')) { closeMasterVolPanel(); return; }
   if (skinPanel.classList.contains('show')) { skinPanel.classList.remove('show'); return; }
   if (hotkeyMenuOpen) { closeHotkeyMenu(); return; }
   openHotkeyMenu();
@@ -2189,7 +2397,8 @@ document.addEventListener('keydown', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 's' && e.key !== 'S') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
-  subtitlesOn = !subtitlesOn; if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+  subtitlesOn = !subtitlesOn;
+  if (subtitlesOn && currentSubtitle) showSubtitle(currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
   toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
 });
 document.addEventListener('keydown', (e) => {
@@ -2207,11 +2416,15 @@ document.addEventListener('keydown', (e) => {
   skinPanel.classList.add('show');
 });
 
-// Listener: bottone SKIN nel menu ESC
+// Listener: bottoni menu ESC
 hkSkin.addEventListener('click', (e) => {
   e.stopPropagation();
   closeHotkeyMenu();
   skinPanel.classList.add('show');
+});
+hkVolume.addEventListener('click', (e) => {
+  e.stopPropagation();
+  openMasterVolPanel();
 });
 hkMicDebug.addEventListener('click', (e) => { e.stopPropagation(); micDebug = !micDebug; updateHotkeyMenu(); closeHotkeyMenu(); });
 hkProvider.addEventListener('click', (e) => { e.stopPropagation(); toggleProvider(); closeHotkeyMenu(); });
@@ -2224,6 +2437,8 @@ document.body.addEventListener('click', (e) => {
 // ============================================================
 try { localStorage.removeItem('avatar_muted'); } catch (e) {}
 muted = false;
+// Sottotitoli: SEMPRE spenti all'avvio. Rimuovo eventuale flag residuo da versioni vecchie.
+try { localStorage.removeItem('avatar_subs'); } catch (e) {}
 enterState('awake', 0);
 setInterval(checkScheduledEvents, 5000); checkScheduledEvents();
 function renderLoop() { drawAvatar(); requestAnimationFrame(renderLoop); }

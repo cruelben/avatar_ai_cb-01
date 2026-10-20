@@ -1058,7 +1058,7 @@ window.loadSharedAvatar = async function(name, text) {
       <input type="file" accept=".html,.htm" id="fileInput" hidden>
       📁 SCEGLI FILE
     </label>
-    <p class="hint">Il file deve contenere <code>const AUDIO_CONFIG = {...}</code> (e, per la reattività, <code>const MIC_CONFIG = {...}</code>)</p>
+    <p class="hint">Il file deve contenere <code>const AUDIO_CONFIG = {...}</code>, <code>const SPEECH_VOLUME_CONFIG = {...}</code> e, per la reattività, <code>const MIC_CONFIG = {...}</code></p>
   </section>
 
   <section id="editor" hidden>
@@ -1073,6 +1073,7 @@ window.loadSharedAvatar = async function(name, text) {
     <p class="note">
       Il pulsante ▶ PROVA usa la voce italiana del tuo browser e i suoni dell'avatar al volume scelto.<br>
       Il volume reale dipende anche dal volume del PC. Le voci vanno da 0 a 1; i suoni elettronici sono molto più bassi (0.03–0.1 di solito).<br>
+      I volumi <b>A · T · L</b> in cima sono i default dell'avatar; nell'avatar puoi poi scalarli in tempo reale con il tasto <code>V</code> (master volume).<br>
       Reattività: i profili impostano insieme più soglie; poi puoi ritoccare ogni valore. Per tarare sul campo apri l'avatar e premi <code>D</code> (misuratore del microfono) per vedere livello, fondo, crest e soglie.
     </p>
 
@@ -1089,6 +1090,7 @@ window.loadSharedAvatar = async function(name, text) {
 // CAMPI MODIFICABILI
 // ============================================================
 const GROUPS = [
+  { id: 'speechMaster', title: '◈ VOLUME VOCI (A · T · L)' },
   { id: 'voice', title: '◈ VOCE' },
   { id: 'sound', title: '◈ SUONI ELETTRONICI' },
   { id: 'micVoice', title: '◈ REATTIVITÀ — VOCE E SUONI PROLUNGATI' },
@@ -1112,6 +1114,21 @@ const PRESETS = [
 ];
 
 const FIELDS = [
+  // ---- VOLUME VOCI (A / T / L) — blocco SPEECH_VOLUME_CONFIG ----
+  { key: 'aiContextVolume', block: 'SPEECH_VOLUME_CONFIG', group: 'speechMaster', kind: 'speech',
+    label: 'AI con contesto (A)',
+    desc: 'Volume delle risposte AI quando è attiva la modalità A (con materiale di contesto).',
+    sample: 'risposta con contesto', max: 1, step: 0.01 },
+  { key: 'aiNoContextVolume', block: 'SPEECH_VOLUME_CONFIG', group: 'speechMaster', kind: 'speech',
+    label: 'AI senza contesto (T)',
+    desc: 'Volume delle risposte AI quando è attiva la modalità T (chat libera, senza materiale).',
+    sample: 'risposta senza contesto', max: 1, step: 0.01 },
+  { key: 'readVolume', block: 'SPEECH_VOLUME_CONFIG', group: 'speechMaster', kind: 'speech',
+    label: 'Lettura file (L)',
+    desc: 'Volume della lettura del file audio_sourge.js (o file importato) quando premi L.',
+    sample: 'Ciao, questa è una prova della lettura', max: 1, step: 0.01 },
+
+  // ---- VOCE (altri volumi) ----
   { key: 'scheduledVolume', block: 'AUDIO_CONFIG', group: 'voice', kind: 'speech',
     label: 'Messaggi schedulati',
     desc: 'Frasi agli orari fissi, avvisi di pausa e saluti al rientro.',
@@ -1128,10 +1145,8 @@ const FIELDS = [
     label: 'Risposte ai rumori',
     desc: 'Frasi in risposta alla tua voce o a un colpo ("eh?", "dimmi", "oh!").',
     sample: 'dimmi', max: 1, step: 0.01 },
-  { key: 'readVolume', block: 'AUDIO_CONFIG', group: 'voice', kind: 'speech',
-    label: 'Lettura da file (tasto L)',
-    desc: 'Il testo di audio_sourge.js letto a voce quando premi L.',
-    sample: 'Ciao, questa è una prova della lettura', max: 1, step: 0.01 },
+
+  // ---- SUONI ELETTRONICI ----
   { key: 'greetVolume', block: 'AUDIO_CONFIG', group: 'sound', kind: 'greet',
     label: 'Suono del saluto',
     desc: 'Le tre note quando tocchi lo schermo.', max: 0.3, step: 0.001 },
@@ -1806,6 +1821,7 @@ function load(name) {
 function reportMissingBlocks(html) {
   const missing = [];
   if (html.indexOf('const AUDIO_CONFIG = {') === -1) missing.push('AUDIO_CONFIG');
+  if (html.indexOf('const SPEECH_VOLUME_CONFIG = {') === -1) missing.push('SPEECH_VOLUME_CONFIG');
   if (html.indexOf('const MIC_CONFIG = {') === -1) missing.push('MIC_CONFIG');
   if (html.indexOf('SCHEDULED_EVENTS') === -1) missing.push('SCHEDULED_EVENTS');
   const bar = document.getElementById('warnBar');
