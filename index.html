@@ -73,7 +73,7 @@
     text-shadow: 0 0 12px rgba(0,255,136,0.8);
     box-shadow: 0 0 24px rgba(0,255,157,0.18);
     opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-    /* NUOVE REGOLE PER IL TESTO LUNGO */
+    /* REGOLE PER IL TESTO LUNGO */
     max-height: 28vh;
     overflow-y: auto;
     word-break: break-word;
@@ -272,7 +272,7 @@
     <button class="mv-close" id="master-vol-close" title="Chiudi">✕</button>
   </div>
   <div class="mv-row">
-    <!-- MODIFICATO: max="3" per arrivare al 300% -->
+    <!-- Slider fino a 300% -->
     <input type="range" id="master-vol-slider" min="0" max="3" step="0.01" value="1">
     <div class="mv-value" id="master-vol-value">100%</div>
   </div>
@@ -313,6 +313,10 @@
 
   <h3>MICROPHONE</h3>
   <button class="menu-btn" id="hk-mic-debug"><span class="key">D</span><span class="label">debug mic</span></button>
+
+  <h3>SUPPORT</h3>
+  <a class="menu-link" href="https://ko-fi.com/cruelben" target="_blank" rel="noopener">☕ Ko-fi: ko-fi.com/cruelben</a>
+  <a class="menu-link" href="https://paypal.me/bben" target="_blank" rel="noopener">💸 PayPal: paypal.me/bben</a>
 
   <h3>INFO</h3>
   <div class="menu-version">CB-01 · v1.4.0</div>
@@ -604,7 +608,6 @@ try {
   if (!isNaN(stored) && stored >= 0 && stored <= 3) masterVolume = stored;
 } catch (e) {}
 
-// MODIFICATO: rimuoviamo il Math.min(1, ...) per permettere moltiplicatori > 1.0
 function vol(base) { return base * masterVolume; }
 
 const SELF_TALK_PHRASES = ["che ore sono?","ho fame","che palle","mi annoio","ancora qui?","quasi ora di staccare","un caffè, dai","basta guardarmi","quanto manca?","che sonno"];
@@ -1481,7 +1484,15 @@ function handleButtonClick(id) {
     if (readActive) stopReading(); else startReading();
   } else if (id === 'S') {
     subtitlesOn = !subtitlesOn;
-    if (subtitlesOn && currentSubtitle) updateSubtitleRealtime(0, currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+    if (subtitlesOn) {
+      if (isSpeaking && currentSpeechState) {
+        updateSubtitleRealtime(currentSpeechState.charIndex, currentSpeechState.text);
+      } else if (currentSubtitle) {
+        updateSubtitleRealtime(0, currentSubtitle);
+      }
+    } else {
+      subtitleEl.classList.remove('show');
+    }
     toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
   } else if (id === 'M') {
     muted = !muted;
@@ -1925,6 +1936,7 @@ let subtitleHideTimer = null;
 function updateSubtitleRealtime(charIndex, fullText) {
   if (!subtitlesOn) return;
   clearTimeout(subtitleHideTimer);
+  if (!fullText) return;
 
   let start = charIndex;
   let end = charIndex;
@@ -2576,7 +2588,15 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keydown', (e) => {
   if (isTypingInField()) return; if ((e.key !== 's' && e.key !== 'S') || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
   subtitlesOn = !subtitlesOn;
-  if (subtitlesOn && currentSubtitle) updateSubtitleRealtime(0, currentSubtitle); else if (!subtitlesOn) subtitleEl.classList.remove('show');
+  if (subtitlesOn) {
+    if (isSpeaking && currentSpeechState) {
+      updateSubtitleRealtime(currentSpeechState.charIndex, currentSpeechState.text);
+    } else if (currentSubtitle) {
+      updateSubtitleRealtime(0, currentSubtitle);
+    }
+  } else {
+    subtitleEl.classList.remove('show');
+  }
   toast(subtitlesOn ? '💬 subtitles on' : '💬 subtitles off');
 });
 document.addEventListener('keydown', (e) => {
